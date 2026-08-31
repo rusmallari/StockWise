@@ -1,28 +1,28 @@
-# StockWise
+# StockWise (Python/Flask - Budget module)
 
-## Overview
-This project is a financial analysis web application that allows users to explore and evaluate stock market information. The application provides tools for researching companies, analyzing investment risk, and understanding potential return on investment.
-
-By interacting with the platform, users can search for companies, review financial insights, and explore investment data in a structured format. The project demonstrates practical experience in software design, financial data analysis, and building user-focused web applications.
+A personal finance and expense tracker — a Python conversion of the original
+Budget-Buddy concept (Swift/React/Firebase), rebuilt in Flask + SQLite to align
+with the StockWise tech stack.
 
 ## Features
-- Search for companies and explore stock-related information
-- Analyze potential investment risk and return on investment
-- User account registration and login authentication
-- Display financial insights in a clear and organized format
-- Provide tools that help beginner investors understand market data
+- User signup/login (password hashing via Werkzeug)
+- Add, edit, delete transactions (name, amount, category, date)
+- Default + custom expense categories
+- Monthly budget limits per category with over/near-limit alerts
+- Transaction history table
+- Spending-by-category pie chart (Chart.js)
 
-## Technologies Used
-- JavaScript
-- Python
-- HTML / CSS
-- SQL
-- Git / GitHub
+## Run it
 
-## Example Functionalities
-Some example functionalities included in this project:
+```bash
+pip install -r requirements.txt
+python app.py
+```
 
-- Search for a company to view stock-related information
-- Analyze risk indicators for potential investments
-- Evaluate potential return on investment for selected companies
-- Display structured financial data through the application interface
+Then visit http://127.0.0.1:5000 — the SQLite database (`stockwise.db`) is
+created automatically on first run.
+
+## Structure
+- `app.py` — routes, models (raw SQLite), auth
+- `templates/` — Jinja2 templates
+- `static/style.css` — styling
