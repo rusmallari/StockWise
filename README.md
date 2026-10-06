@@ -16,7 +16,7 @@ with the StockWise tech stack.
 
 ```bash
 pip install -r requirements.txt
-python app.py
+python stockwise_app.py
 ```
 
 Then visit http://127.0.0.1:5000 — the SQLite database (`stockwise.db`) is
