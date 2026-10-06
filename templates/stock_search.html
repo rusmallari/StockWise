@@ -1,0 +1,29 @@
+{%extends "base.html"%}
+{%block title%} Stocks Search - StockWise {%endblock%}
+
+{%block content%}
+<div class = "card">
+    <form method = "GET" action = "{{url_for('stock_search')}}">
+        <input name = "q" value = "{{query}}" /> 
+        <button class = "btn-primary"> Submit </button>
+    </form>
+    {% if results %}
+            <table class="txn-table">
+                <thead>
+                    <tr><th>Company</th><th>Symbol</th><th>Exchange</th></tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                    <td><a href="{{ url_for('stock_detail', ticker = result['symbol']) }}">{{ result['name'] }}</a></td>
+                    <td>{{ result['symbol'] }}</td>
+                    <td>{{ result['exchange'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table> 
+    {%elif query %}
+        <p class = "empty-state"> No stocks found for "{{query}}."</p>
+    {%endif%}
+</div>
+{%endblock%}

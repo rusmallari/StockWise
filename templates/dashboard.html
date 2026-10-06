@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - StockWise{% endblock %}
+{% block content %}
+
+<!-- DASHBOARD HEADER -->
+<div class="dashboard-header">
+  <h1>Your Dashboard</h1>
+  <div class="total-spent">Spent in {{ month_label}}: <strong>${{ "%.2f"|format(total_spent) }}</strong></div>
+</div>
+
+<!-- BUDGET ALERTS -->
+{% if alerts %}
+<div class="alerts">
+  {% for alert in alerts %}
+    <div class="alert-item">⚠️ {{ alert }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="dashboard-grid">
+  <!-- SPENDING CHART -->
+  <div class="card">
+    <h2>Spending in {{month_label}}</h2>
+    {% if chart_labels %}
+      <canvas id="spendingChart" height="220"></canvas>
+    {% else %}
+      <p class="empty-state">No transactions this month yet. </p>
+    {% endif %}
+  </div>
+
+  <!-- TRANSACTION HISTORY TABLE -->
+  <div class="card">
+    <h2>Transaction History</h2>
+    {% if transactions %}
+    <table class="txn-table">
+      <thead>
+        <tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td>{{ t['date'] }}</td>
+          <td>{{ t['name'] }}</td>
+          <td><span class="badge">{{ t['category'] }}</span></td>
+          <td>${{ "%.2f"|format(t['amount']) }}</td>
+          <td class="row-actions">
+            <a href="{{ url_for('edit_transaction', txn_id=t['id']) }}">Edit</a>
+            <form method="POST" action="{{ url_for('delete_transaction', txn_id=t['id']) }}" style="display:inline">
+              <button type="submit" class="link-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty-state">No transactions yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- SPENDING CHART SCRIPT -->
+{% if chart_labels %}
+<script>
+  const ctx = document.getElementById('spendingChart');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: {{ chart_labels|tojson }},
+      datasets: [{
+        data: {{ chart_values|tojson }},
+        backgroundColor: ['#4f7cff', '#ff8a5b', '#39c98d', '#f6c343', '#c084fc', '#ff6b9d', '#54c7ec']
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
+{% endif %}
+
+{% endblock %}

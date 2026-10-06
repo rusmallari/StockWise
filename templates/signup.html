@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - StockWise{% endblock %}
+{% block content %}
+<!-- SIGNUP FORM -->
+<div class="card auth-card">
+  <h1>Create your account</h1>
+  <p class="subtitle">Start tracking your spending in minutes</p>
+  <form method="POST">
+    <label>Username</label>
+    <input type="text" name="username" required autofocus>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <button type="submit" class="btn-primary">Sign Up</button>
+  </form>
+  <p class="switch-auth">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+</div>
+{% endblock %}

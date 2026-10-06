@@ -1,0 +1,70 @@
+{%extends "base.html"%}
+{%block title%} {{profile['name']}} - StockWise {%endblock%}
+
+{%block content%}
+<div class = "card">
+    <h1> {{profile['name']}} <span class = "subtitle"> {{profile['symbol']}} </span></h1>
+    <p class = "subtitle"> Sector: {{profile['sector'] or "Not Available"}} </p>
+    <p class = "subtitle"> Industry: {{profile['industry'] or "Not Available"}} </p>
+    {% if profile['website'] %}
+        <p> Link to Website: 
+            <a href = "{{profile['website']}}" target = "_blank" rel = "noopener"> {{profile['name']}} </a>
+        </p>
+    {%endif%}  
+    <a href = "{{url_for('stock_search')}}"> Back to Search</a> 
+
+
+    {% if profile['description'] %}
+        <p> {{profile['description']}}</p>
+    {%else%}
+        <p> No Company Description Available </p>
+    {%endif%}
+
+
+    <h2 class = "section-heading"> 1 Year Price</h2>
+    {% if history %}
+        <canvas id = "priceChart" height = "120"
+                data-dates = '{{history["dates"]|tojson}}'
+                data-closes = '{{history["closes"]|tojson}}'> 
+        </canvas>
+    {%else%}
+        <p class = "empty-state"> Price history not available for this stock. </p>
+    {%endif%}
+
+
+
+    {% if risk %}
+        <p> 1-Year Return: {{ "%.1f" | format(risk['roi'] * 100)}}% </p>
+        <p> Volatility: {{ "%.1f" | format(risk['volatility'] * 100)}}% </p>
+        <p> Risk: {{ risk['risk']}} </p>
+
+        <p> Based on the past year of prices</p>
+    {%else%}
+        <p class = "empty-state"> Not enough price history to confidently estimate return and risk </p>
+    {%endif%}
+</div>
+
+{% if history %}
+ <script>
+    const ctx = document.getElementById("priceChart"); 
+    new Chart(ctx, {
+        type: 'line', 
+        data: {
+            labels: JSON.parse(ctx.dataset.dates), 
+            datasets: [{
+                label: 'Closing price ($)', 
+                data: JSON.parse(ctx.dataset.closes), 
+                borderColor: '#5b8cff', 
+                pointRadius: 0, 
+                tension: 0.1
+            }]
+        }, 
+        options: {responsive: true, plugins: {legend: {display: false} } }
+
+    }); 
+
+ </script>
+ {%endif%}
+
+
+{%endblock%}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}StockWise{% endblock %}</title>
+  <link rel = "stylesheet" href = "{{ url_for('static', filename = 'style.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+  {% if session.get('user_id') %}
+  <!-- NAVIGATION BAR -->
+  <nav class="navbar">
+    <div class="brand">StockWise</div>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('add_transaction') }}">Add Transaction</a>
+      <a href="{{ url_for('budget_settings') }}">Budget Settings</a>
+      <a href="{{ url_for('stock_search') }}"> Stocks</a>
+      <a href="{{ url_for('logout') }}">Logout ({{ session.get('username') }})</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="container">
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

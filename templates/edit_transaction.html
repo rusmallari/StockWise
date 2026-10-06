@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Edit Transaction - StockWise{% endblock %}
+{% block content %}
+<!-- EDIT TRANSACTION FORM -->
+<div class="card form-card">
+  <h1>Edit Transaction</h1>
+  <form method="POST">
+    <label>Name</label>
+    <input type="text" name="name" value="{{ txn['name'] }}" required autofocus>
+
+    <label>Amount ($)</label>
+    <input type="number" step="0.01" name="amount" value="{{ txn['amount'] }}" required>
+
+    <label>Category</label>
+    <select name="category" required>
+      {% for c in categories %}
+        <option value="{{ c['name'] }}" {% if c['name'] == txn['category'] %}selected{% endif %}>{{ c['name'] }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Date</label>
+    <input type="date" name="date" value="{{ txn['date'] }}">
+
+    <button type="submit" class="btn-primary">Save Changes</button>
+  </form>
+</div>
+{% endblock %}
