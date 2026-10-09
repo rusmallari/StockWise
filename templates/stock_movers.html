@@ -1,0 +1,46 @@
+{%extends "base.html"%}
+{%block title%} Stock Movers - StockWise {%endblock%}
+
+{%block content%}
+
+{%for title, stocks in sections.items()%}
+    <h2 class = "section-heading"> {{title}}</h2>
+    {%if stocks%}
+        <table class = "txn-table">
+            <thead>
+                <tr><th> Company </th><th> Symbol </th><th> Price </th><th> Change </th></tr>
+            </thead>
+            <tbody>
+                {%for stock in stocks%}
+                <tr>
+                <td><a href = "{{url_for('stock_detail', ticker = stock['symbol'])}}"> {{stock['name']}} </a></td>
+                <td> {{stock['symbol']}}</td>
+                <td>
+                {%if stock['price'] is not none %}
+                    ${{"%.2f"|format(stock['price'])}} 
+                {%else%}
+                    -  
+                {%endif%}
+                </td>
+                <td>
+                {%if stock['change_percent'] is not none%}
+                    {{"%+.2f"|format(stock['change_percent'])}}% 
+                {%else%}
+                    -
+                {%endif%}
+                </td>
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+    
+    {%else%}
+        <p class = "empty-state"> This list is not available right now. </p>
+
+    {%endif%}
+
+{%endfor%}
+
+
+
+{%endblock%}

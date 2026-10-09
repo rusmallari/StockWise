@@ -406,9 +406,20 @@ def stock_detail(ticker):
     return render_template("stock_detail.html", profile=profile, history=history, risk=roi_and_risk)
 
 
+@app.route("/stocks/movers")
+@login_required
+def stock_movers():
+    movers = {}
+    movers["Top Gainers"] = stocks_data.gainers_losers_mostactive("gainers", 6)
+    movers["Top Losers"] = stocks_data.gainers_losers_mostactive("losers", 6)
+    movers["Most Active"] = stocks_data.gainers_losers_mostactive(
+        "most_active", 6)
+    return render_template("stock_movers.html", sections=movers)
+
 # ---------------------------------------------------------------------------
 # Simple JSON API (handy if a JS frontend is added later)
 # ---------------------------------------------------------------------------
+
 
 @app.route("/api/summary")
 @login_required
