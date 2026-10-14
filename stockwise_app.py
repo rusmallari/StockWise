@@ -433,6 +433,22 @@ def api_summary():
     conn.close()
     return jsonify({r["category"]: r["total"] for r in rows})
 
+# ---------------------------------------------------------------------------
+# JSON API (incase it uses something else ill leave it but if not ill delete everything below)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/summary")
+@login_required
+def api_summary():
+    conn = get_db()
+    user_id = session["user_id"]
+    rows = conn.execute(
+        "SELECT category, SUM(amount) as total FROM transactions WHERE user_id = ? GROUP BY category",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return jsonify({r["category"]: r["total"] for r in rows})
+
 
 init_db()
 if __name__ == "__main__":
