@@ -417,7 +417,7 @@ def stock_movers():
     return render_template("stock_movers.html", sections=movers)
 
 # ---------------------------------------------------------------------------
-# Simple JSON API (handy if a JS frontend is added later)
+# JSON API
 # ---------------------------------------------------------------------------
 
 
