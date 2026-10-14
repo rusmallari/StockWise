@@ -1,6 +1,7 @@
 # StockWise (A personal finance and expense tracker)
 
-This app allows users to manage their monthly expenses, as well as look into investing into stock with resources such as AI chatbot/articles from NY Times API
+This app allows users to manage their monthly expenses, as well as look into investing into stock with resources such as AI chatbot/articles from NY Times API.
+When stocks are search it displays, performance of the stock within the last year, theoretical ROI and Risk assessment.
 
 ## Features
 - User signup/login (password hashing via Werkzeug)
@@ -9,6 +10,9 @@ This app allows users to manage their monthly expenses, as well as look into inv
 - Monthly budget limits per category with over/near-limit alerts
 - Transaction history table
 - Spending-by-category pie chart (Chart.js)
+- Stock search (ROI, performance over the past year, and risk assessment)
+- Article Search gives validation on why to choose a stock
+- AI chatbot (answers all finance related questions)
 
 ## Run it
 
