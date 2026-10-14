@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime, date, timezone
 from collections import defaultdict
 from services import stocks_data
+from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -78,16 +79,17 @@ def seed_default_categories(user_id):
 # Auth helpers
 # ---------------------------------------------------------------------------
 
-def login_required(view):
+def login_required(func):
     from functools import wraps
 
-    @wraps(view)
-    def wrapped(*args, **kwargs):
+    @wraps(func)
+    def check_login(*args, **kwargs):
         if "user_id" not in session:
+            flash("Please log in first.")
             return redirect(url_for("login"))
-        return view(*args, **kwargs)
+        return func(*args, **kwargs)
 
-    return wrapped
+    return check_login
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +159,9 @@ def login():
 
     return render_template("login.html")
 
+# ---------------------------------------------------------------------------
+# Logout Button / return to login page
+# ---------------------------------------------------------------------------
 
 @app.route("/logout")
 def logout():
@@ -165,7 +170,7 @@ def logout():
 
 
 # ---------------------------------------------------------------------------
-# Dashboard / transaction history + charts
+# Dashboard / transaction history + circle charts
 # ---------------------------------------------------------------------------
 
 @app.route("/dashboard")
@@ -225,7 +230,9 @@ def dashboard():
 
 
 # ---------------------------------------------------------------------------
-# Transactions CRUD
+# Transactions
+# This is basically, inputting transaction data like, amount, date posted,
+# category
 # ---------------------------------------------------------------------------
 
 @app.route("/transactions/add", methods=["GET", "POST"])
@@ -260,6 +267,11 @@ def add_transaction():
 
     conn.close()
     return render_template("add_transaction.html", categories=categories, today=date.today().isoformat())
+
+
+# edit transaction under tranaction history tab on dashboard.
+# This is when user wants to edit their transaction, as well as error handling
+# User needs to input a valid response, or it will return an error.
 
 
 @app.route("/transactions/<int:txn_id>/edit", methods=["GET", "POST"])
@@ -302,6 +314,7 @@ def edit_transaction(txn_id):
     conn.close()
     return render_template("edit_transaction.html", txn=txn, categories=categories)
 
+# Under Transaction History you can delete transaction on the dashboard.
 
 @app.route("/transactions/<int:txn_id>/delete", methods=["POST"])
 @login_required
@@ -317,7 +330,7 @@ def delete_transaction(txn_id):
 
 
 # ---------------------------------------------------------------------------
-# Budget settings (limits per category, custom categories)
+# Budget settings
 # ---------------------------------------------------------------------------
 
 @app.route("/budget-settings", methods=["GET", "POST"])
@@ -363,6 +376,9 @@ def budget_settings():
     conn.close()
     return render_template("budget_settings.html", categories=categories)
 
+# ---------------------------------------------------------------------------
+# Delete transactions Button
+# ---------------------------------------------------------------------------
 
 @app.route("/categories/<int:cat_id>/delete", methods=["POST"])
 @login_required
@@ -376,6 +392,9 @@ def delete_category(cat_id):
     conn.close()
     return redirect(url_for("budget_settings"))
 
+# ---------------------------------------------------------------------------
+# Stock Search Tab
+# ---------------------------------------------------------------------------
 
 @app.route("/stocks/search", methods=["GET"])
 @login_required
@@ -406,6 +425,10 @@ def stock_detail(ticker):
     return render_template("stock_detail.html", profile=profile, history=history, risk=roi_and_risk)
 
 
+# ---------------------------------------------------------------------------
+# Stock Movers tab
+# ---------------------------------------------------------------------------
+
 @app.route("/stocks/movers")
 @login_required
 def stock_movers():
@@ -415,23 +438,6 @@ def stock_movers():
     movers["Most Active"] = stocks_data.gainers_losers_mostactive(
         "most_active", 6)
     return render_template("stock_movers.html", sections=movers)
-
-# ---------------------------------------------------------------------------
-# JSON API
-# ---------------------------------------------------------------------------
-
-
-@app.route("/api/summary")
-@login_required
-def api_summary():
-    conn = get_db()
-    user_id = session["user_id"]
-    rows = conn.execute(
-        "SELECT category, SUM(amount) as total FROM transactions WHERE user_id = ? GROUP BY category",
-        (user_id,),
-    ).fetchall()
-    conn.close()
-    return jsonify({r["category"]: r["total"] for r in rows})
 
 # ---------------------------------------------------------------------------
 # JSON API (incase it uses something else ill leave it but if not ill delete everything below)
