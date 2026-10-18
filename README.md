@@ -1,8 +1,7 @@
-# StockWise (Python/Flask - Budget module)
+# StockWise (A personal finance and expense tracker)
 
-A personal finance and expense tracker — a Python conversion of the original
-Budget-Buddy concept (Swift/React/Firebase), rebuilt in Flask + SQLite to align
-with the StockWise tech stack.
+This app allows users to manage their monthly expenses, as well as look into investing into stock with resources such as AI chatbot/articles from NY Times API.
+When stocks are search it displays, performance of the stock within the last year, theoretical ROI and Risk assessment.
 
 ## Features
 - User signup/login (password hashing via Werkzeug)
@@ -11,6 +10,9 @@ with the StockWise tech stack.
 - Monthly budget limits per category with over/near-limit alerts
 - Transaction history table
 - Spending-by-category pie chart (Chart.js)
+- Stock search (ROI, performance over the past year, and risk assessment)
+- Article Search gives validation on why to choose a stock
+- AI chatbot (answers all finance related questions)
 
 ## Run it
 

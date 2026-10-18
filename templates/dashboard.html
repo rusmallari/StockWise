@@ -1,14 +1,145 @@
+
 {% extends "base.html" %}
 {% block title %}Dashboard - StockWise{% endblock %}
 {% block content %}
 
-<!-- DASHBOARD HEADER -->
+<style>
+  /* Budget section */
+  .budget-progress {
+    margin-bottom: 22px;
+  }
+
+  .budget-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .budget-section-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .budget-edit-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.88rem;
+  }
+
+  .budget-edit-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Layout for the budget categories */
+  .budget-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .budget-category-card {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg-alt);
+  }
+
+  .budget-category-header,
+  .budget-category-amounts {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .budget-category-header {
+    margin-bottom: 12px;
+  }
+
+  .budget-category-header strong {
+    font-size: 0.92rem;
+  }
+
+  .budget-category-header span,
+  .budget-category-amounts {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .budget-category-amounts {
+    margin-top: 10px;
+  }
+
+  .budget-category-amounts span:last-child {
+    text-align: right;
+  }
+
+  /* Budget progress bars */
+  .budget-track {
+    height: 7px;
+    border-radius: 5px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .budget-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 5px;
+  }
+
+  .budget-category-card.near-limit .budget-fill {
+    background: var(--warning);
+  }
+
+  .budget-category-card.over-limit .budget-fill {
+    background: var(--danger);
+  }
+
+  .budget-category-card.over-limit .budget-category-amounts span:last-child {
+    color: var(--danger);
+  }
+
+  .budget-category-card.no-limit .budget-category-amounts {
+    margin-top: 0;
+  }
+
+  /* Chart sizing */
+  .spending-chart-wrap {
+    width: 100%;
+    max-width: 310px;
+    height: 220px;
+    margin: 0 auto;
+  }
+
+  .transaction-table-wrap {
+    overflow-x: auto;
+  }
+
+  /* Smaller screens */
+  @media (max-width: 720px) {
+    .budget-progress-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .budget-section-header {
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<!-- Dashboard header -->
 <div class="dashboard-header">
   <h1>Your Dashboard</h1>
-  <div class="total-spent">Spent in {{ month_label}}: <strong>${{ "%.2f"|format(total_spent) }}</strong></div>
+  <div class="total-spent">
+    Spent in {{ month_label }}:
+    <strong>${{ "%.2f"|format(total_spent) }}</strong>
+  </div>
 </div>
 
-<!-- BUDGET ALERTS -->
+<!-- Show budget warnings if there are any -->
 {% if alerts %}
 <div class="alerts">
   {% for alert in alerts %}
@@ -17,62 +148,158 @@
 </div>
 {% endif %}
 
-<div class="dashboard-grid">
-  <!-- SPENDING CHART -->
-  <div class="card">
-    <h2>Spending in {{month_label}}</h2>
-    {% if chart_labels %}
-      <canvas id="spendingChart" height="220"></canvas>
-    {% else %}
-      <p class="empty-state">No transactions this month yet. </p>
-    {% endif %}
+<!-- Show spending and remaining money for each budget -->
+<section class="card budget-progress">
+  <div class="budget-section-header">
+    <h2>Monthly Budget Progress</h2>
+    <a class="budget-edit-link" href="{{ url_for('budget_settings') }}">Edit limits</a>
   </div>
 
-  <!-- TRANSACTION HISTORY TABLE -->
-  <div class="card">
+  <div class="budget-progress-grid">
+    {% for cat in categories %}
+
+      <!-- Calculate how much of the budget was used -->
+      {% set limit = cat['monthly_limit']|float %}
+      {% set spent = chart_values[chart_labels.index(cat['name'])] if cat['name'] in chart_labels else 0 %}
+      {% set remaining = limit - spent %}
+      {% set percent = (spent / limit * 100) if limit > 0 else 0 %}
+      {% set bar_width = [[percent, 0]|max, 100]|min %}
+
+      <div class="budget-category-card{% if limit <= 0 %} no-limit{% elif spent > limit %} over-limit{% elif spent >= limit * 0.8 %} near-limit{% endif %}">
+        <div class="budget-category-header">
+          <strong>{{ cat['name'] }}</strong>
+          <span>{% if limit > 0 %}${{ "%.2f"|format(limit) }} limit{% else %}No limit set{% endif %}</span>
+        </div>
+
+        {% if limit > 0 %}
+          <div class="budget-track" role="progressbar" aria-label="{{ cat['name'] }} budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ bar_width|round|int }}">
+            <div class="budget-fill" style="width: {{ bar_width }}%;"></div>
+          </div>
+
+          <div class="budget-category-amounts">
+            <span>Spent ${{ "%.2f"|format(spent) }}</span>
+
+            {% if remaining < 0 %}
+              <span>Over by ${{ "%.2f"|format(-remaining) }}</span>
+            {% else %}
+              <span>${{ "%.2f"|format(remaining) }} left</span>
+            {% endif %}
+          </div>
+
+        {% else %}
+          <div class="budget-category-amounts">
+            <span>Spent ${{ "%.2f"|format(spent) }}</span>
+            <span>Unlimited</span>
+          </div>
+        {% endif %}
+      </div>
+
+    {% else %}
+      <p class="empty-state">No budget categories yet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="dashboard-grid">
+
+  <!-- Monthly spending chart -->
+  <section class="card">
+    <h2>Spending in {{ month_label }}</h2>
+
+    {% if chart_labels %}
+      <div class="spending-chart-wrap">
+        <canvas id="spendingChart"></canvas>
+      </div>
+    {% else %}
+      <div class="dashboard-empty">
+        <p>No spending recorded this month.</p>
+        <a class="quick-action" href="{{ url_for('add_transaction') }}">+ Add Transaction</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- List of the user's transactions -->
+  <section class="card">
     <h2>Transaction History</h2>
+
     {% if transactions %}
-    <table class="txn-table">
-      <thead>
-        <tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for t in transactions %}
-        <tr>
-          <td>{{ t['date'] }}</td>
-          <td>{{ t['name'] }}</td>
-          <td><span class="badge">{{ t['category'] }}</span></td>
-          <td>${{ "%.2f"|format(t['amount']) }}</td>
-          <td class="row-actions">
-            <a href="{{ url_for('edit_transaction', txn_id=t['id']) }}">Edit</a>
-            <form method="POST" action="{{ url_for('delete_transaction', txn_id=t['id']) }}" style="display:inline">
-              <button type="submit" class="link-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+      <div class="transaction-table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for t in transactions %}
+              <tr>
+                <td>{{ t['date'] }}</td>
+                <td>{{ t['name'] }}</td>
+                <td><span class="badge">{{ t['category'] }}</span></td>
+                <td>${{ "%.2f"|format(t['amount']) }}</td>
+
+                <td class="row-actions">
+                  <a href="{{ url_for('edit_transaction', txn_id=t['id']) }}">Edit</a>
+
+                  <form method="POST" action="{{ url_for('delete_transaction', txn_id=t['id']) }}" style="display:inline">
+                    <button type="submit" class="link-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
     {% else %}
       <p class="empty-state">No transactions yet.</p>
     {% endif %}
-  </div>
+  </section>
 </div>
 
-<!-- SPENDING CHART SCRIPT -->
+<!-- Create the chart using the spending data -->
 {% if chart_labels %}
 <script>
   const ctx = document.getElementById('spendingChart');
+
   new Chart(ctx, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: {{ chart_labels|tojson }},
       datasets: [{
         data: {{ chart_values|tojson }},
-        backgroundColor: ['#4f7cff', '#ff8a5b', '#39c98d', '#f6c343', '#c084fc', '#ff6b9d', '#54c7ec']
+        backgroundColor: [
+          '#5b8cff',
+          '#e5a13d',
+          '#3fbf7f',
+          '#ae87df',
+          '#f2685a',
+          '#54b8cb',
+          '#8b91a3'
+        ],
+        borderWidth: 0
       }]
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8b91a3',
+            boxWidth: 12,
+            padding: 14
+          }
+        }
+      }
+    }
   });
 </script>
 {% endif %}
