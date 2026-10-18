@@ -2,14 +2,16 @@ import os
 import sqlite3
 from datetime import datetime, date, timezone
 from collections import defaultdict
-from services import stocks_data
+from services import stocks_data, ai, user_context
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "stockwise.db")
 
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
@@ -415,6 +417,49 @@ def stock_movers():
     movers["Most Active"] = stocks_data.gainers_losers_mostactive(
         "most_active", 6)
     return render_template("stock_movers.html", sections=movers)
+
+# Connect the browser with the chatbot. Data is what is received from the browser as json, which
+# is the conversation history between the user and the bot.
+
+
+@app.route("/chat/send", methods=["POST"])
+@login_required
+def chat_send():
+    data = request.get_json(silent=True) or {}
+    history = data.get("history", [])
+    if not isinstance(history, list):
+        return jsonify({"error": "Invalid chat history"}), 400
+    clean_messages = []
+
+    # for each message in the chat history, check to make sure its a dictionary, that there is
+    # content to be read, and that the message is either from the user or the bot (assistant). Then
+    # add that message to the clean messages and return only the last 10 messages to not kill
+    # the api bill.
+    for message in history:
+        if (isinstance(message, dict)
+            and isinstance(message.get("content"), str)
+            and message.get("content")
+                and (message.get("role") == "user" or message.get("role") == "assistant")):
+
+            new_dictionary = {
+                "role": message["role"],
+                "content": message["content"][:2000]
+            }
+            clean_messages.append(new_dictionary)
+    clean = clean_messages[-10:]
+    if not clean:
+        return jsonify({"error": "No message received"}), 400
+
+    # if there is context in the session, pass it to get_ai_reply to get more personalized
+    # conversation from the chatbot
+    user_id = session["user_id"]
+    context = user_context.build_budget_context(
+        user_id) + "\n\n" + user_context.build_stock_context()
+
+    reply = ai.get_ai_reply(clean, context)
+    if reply is None:
+        return jsonify({"error": "Assistant not available right now"}), 503
+    return jsonify({"reply": reply})
 
 # ---------------------------------------------------------------------------
 # Simple JSON API (handy if a JS frontend is added later)

@@ -14,6 +14,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "stockwise.db")
 SCREENS = {"gainers": "day_gainers",
            "losers": "day_losers", "most_active": "most_actives"}
+
 VALID_TIME_LEFT_SEARCH = 24 * 3600
 VALID_TIME_LEFT_PROFILE = 24 * 3600
 VALID_TIME_LEFT_HISTORY = 12 * 3600

@@ -38,5 +38,21 @@
 
     {% block content %}{% endblock %}
   </main>
+  {%if session.get('user_id')%}
+    <button id = "chat-toggle" class = "chat-toggle" type = "button"> Stocks Assistant! </button>
+    <div id = "chat-panel" class = "chat-panel">
+      <div class = "chat-header">
+        StockWise Assistant
+        <button id = "chat-close" type = "button"> X </button>
+      </div>
+      <div id = "chat-messages" class = "chat-messages"></div>
+      <form id = "chat-form" class = "chat-form">
+        <input id = "chat-input" autocomplete = "off" maxlength = "2000" placeholder = "Ask a finance question">
+        <button type = "submit"> Send </button>
+      </form>
+    </div>
+    <script src = "{{url_for('static', filename = 'chat.js')}}" defer></script>
+
+  {%endif%}
 </body>
 </html>
