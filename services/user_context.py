@@ -59,17 +59,23 @@ def build_budget_context(user_id):
     lines = [f"Budget for {month_label} (spent/ limit / remaining):"]
     total_left = 0
 
+    # for each user's category, find the budget limit
     for category in categories:
         limit = category["monthly_limit"] or 0
+        # if the budget limit is zero or less, move to the next category
         if limit <= 0:
             continue
+        # else find how much we have spent so far and subtract it from the budget limit to get the remaining amount
         spent = spent_by_category.get(category["name"], 0)
         remaining = limit - spent
 
+        # if there is still remaining money, build a string that has "category_name / how much spent / budget limit / remaining"
+        # add that string to list called "lines" which is what we're going to pass to the chatbot for context
         if remaining >= 0:
             lines.append(
                 f"- {category['name']}: ${spent:.2f} / ${limit:.2f} / ${remaining:.2f} left")
             total_left += remaining
+        # if the remaining money is less than zero, the user has exceeded their budget
         else:
             lines.append(
                 f"- {category['name']}: ${spent:.2f} / ${limit:.2f} / ${abs(remaining):.2f} over")
@@ -82,6 +88,7 @@ def build_budget_context(user_id):
 def build_stock_context():
     lines = [
         "Investment options in StockWise (1-year return, volatility, risk):"]
+    # for each company in the candidates list above, get the roi, volatility, and risk for each one
     for symbol, description in CANDIDATES:
         standing = stocks_data.get_roi_and_risk(symbol)
         if standing is None:
