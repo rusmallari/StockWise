@@ -1,0 +1,213 @@
+
+{% extends "base.html" %}
+{% block title %}Financial Articles - StockWise{% endblock %}
+{% block content %}
+
+<style>
+  /* Main articles page */
+  .articles-page {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .articles-header {
+    margin-bottom: 24px;
+  }
+
+  .articles-header h1 {
+    margin-bottom: 8px;
+  }
+
+  .articles-header p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Search form */
+  .articles-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .articles-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .articles-search button {
+    width: auto;
+    margin: 0;
+    padding: 12px 24px;
+    white-space: nowrap;
+  }
+
+  /* Article results */
+  .articles-results {
+    display: grid;
+    gap: 12px;
+  }
+
+  .article-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .article-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .article-card h2 {
+    font-size: 1.08rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+
+  .article-card p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0 0 14px;
+  }
+
+  .article-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  .article-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Message shown when no results are found */
+  .articles-message {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--muted);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .articles-error {
+    color: var(--danger);
+  }
+
+  /* Adjust search form for smaller screens */
+  @media (max-width: 600px) {
+    .articles-search {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .articles-search button {
+      width: 100%;
+    }
+
+    .article-card {
+      padding: 16px;
+    }
+  }
+</style>
+
+<div class="articles-page">
+
+  <!-- Page header -->
+  <div class="articles-header">
+    <h1>Financial Articles</h1>
+    <p>
+      Search for financial news, stock market updates,
+      and articles about investing.
+    </p>
+  </div>
+
+  <!-- Search for NYT articles -->
+  <form method="GET" class="articles-search">
+    <input
+      type="search"
+      name="q"
+      value="{{ query or '' }}"
+      placeholder="Search stocks, investing, economy..."
+      aria-label="Search financial articles"
+      required
+    >
+
+    <button type="submit" class="btn-primary">
+      Search Articles
+    </button>
+  </form>
+
+  <!-- Show API errors -->
+  {% if error %}
+    <div class="articles-message articles-error">
+      {{ error }}
+    </div>
+
+  <!-- Display articles returned from NYT -->
+  {% elif articles %}
+
+    <div class="articles-results">
+
+      {% for article in articles %}
+      <article class="article-card">
+
+        <!-- Article date and category -->
+        <div class="article-details">
+          <span>{{ article['section'] }}</span>
+          <span>{{ article['date'] }}</span>
+          <span>The New York Times</span>
+        </div>
+
+        <!-- Article headline -->
+        <h2>{{ article['title'] }}</h2>
+
+        <!-- Short description -->
+        {% if article['summary'] %}
+          <p>{{ article['summary'] }}</p>
+        {% endif %}
+
+        <!-- Link to the full article -->
+        {% if article['url'] %}
+          <a
+            class="article-link"
+            href="{{ article['url'] }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read Article →
+          </a>
+        {% endif %}
+
+      </article>
+      {% endfor %}
+
+    </div>
+
+  {% elif query %}
+    <div class="articles-message">
+      No articles found for "{{ query }}".
+    </div>
+
+  {% else %}
+    <div class="articles-message">
+      Enter a topic above to search for financial articles.
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
