@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime, date, timezone
 from collections import defaultdict
 from services import stocks_data, ai, user_context
+from services import nyt_articles
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
@@ -445,8 +446,32 @@ def stock_movers():
         "most_active", 6)
     return render_template("stock_movers.html", sections=movers)
 
+
+# NYT article search page
+@app.route("/articles", methods=["GET"])
+@login_required
+def articles():
+    query = request.args.get("q", "").strip()
+    article_list = []
+    error = None
+
+    # Search NYT when a topic is entered
+    if query:
+        result = nyt_articles.search_articles(query)
+        article_list = result["articles"]
+        error = result["error"]
+
+    # Send the articles to the HTML page
+    return render_template(
+        "articles.html",
+        query=query,
+        articles=article_list,
+        error=error
+    )
+
 # Connect the browser with the chatbot. Data is what is received from the browser as json, which
 # is the conversation history between the user and the bot.
+
 
 
 @app.route("/chat/send", methods=["POST"])
