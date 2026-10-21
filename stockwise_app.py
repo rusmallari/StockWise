@@ -1,12 +1,14 @@
 import os
 import sqlite3
+import secrets
+import hmac
 from datetime import datetime, date, timezone
 from collections import defaultdict
 from services import stocks_data, ai, user_context
 from services import nyt_articles
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -63,6 +65,15 @@ def init_db():
         );
         """
     )
+    # Additive, repeatable migration preserves existing accounts and finance data.
+    columns = {row['name'] for row in conn.execute('PRAGMA table_info(users)')}
+    for name, definition in {
+        'theme': "TEXT NOT NULL DEFAULT 'dark' CHECK(theme IN ('dark', 'light'))",
+        'assistant_enabled': 'INTEGER NOT NULL DEFAULT 1 CHECK(assistant_enabled IN (0, 1))',
+        'notifications_enabled': 'INTEGER NOT NULL DEFAULT 1 CHECK(notifications_enabled IN (0, 1))',
+    }.items():
+        if name not in columns:
+            conn.execute(f'ALTER TABLE users ADD COLUMN {name} {definition}')
     conn.commit()
     conn.close()
 
@@ -98,6 +109,89 @@ def login_required(func):
 # ---------------------------------------------------------------------------
 # Auth routes
 # ---------------------------------------------------------------------------
+
+def csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(32)
+    return session['_csrf_token']
+
+
+@app.before_request
+def load_user_and_protect_requests():
+    g.user = None
+    if session.get('user_id'):
+        conn = get_db()
+        g.user = conn.execute('SELECT * FROM users WHERE id = ?',
+                              (session['user_id'],)).fetchone()
+        conn.close()
+        if g.user is None:
+            session.clear()
+        else:
+            session['username'] = g.user['username']
+    if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+        token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token', '')
+        expected = session.get('_csrf_token', '')
+        if not expected or not hmac.compare_digest(expected.encode('utf-8'), token.encode('utf-8')):
+            if request.is_json:
+                return jsonify(error='Session expired. Refresh the page and try again.'), 400
+            abort(400, description='Invalid CSRF token. Refresh the page and try again.')
+
+
+@app.context_processor
+def shared_settings():
+    return {'current_user': g.user, 'csrf_token': csrf_token}
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def user_settings():
+    if request.method == 'POST':
+        section = request.form.get('section')
+        conn = get_db()
+        try:
+            if section == 'profile':
+                username = request.form.get('username', '').strip()
+                if not username or len(username) > 80 or any(not c.isprintable() for c in username):
+                    flash('Username must contain 1–80 printable characters.', 'error')
+                    return redirect(url_for('user_settings'))
+                current_password = request.form.get('current_password', '')
+                new_password = request.form.get('new_password', '')
+                confirm_password = request.form.get('confirm_password', '')
+                if current_password or new_password or confirm_password:
+                    if not current_password or not new_password or not confirm_password:
+                        flash('To change your password, fill in all three password fields.', 'error')
+                        return redirect(url_for('user_settings'))
+                    if not check_password_hash(g.user['password_hash'], current_password):
+                        flash('Current password is incorrect.', 'error')
+                        return redirect(url_for('user_settings'))
+                    if new_password != confirm_password:
+                        flash('New passwords do not match.', 'error')
+                        return redirect(url_for('user_settings'))
+                    conn.execute('UPDATE users SET username = ?, password_hash = ? WHERE id = ?',
+                                 (username, generate_password_hash(new_password), session['user_id']))
+                else:
+                    conn.execute('UPDATE users SET username = ? WHERE id = ?',
+                                 (username, session['user_id']))
+            elif section == 'preferences':
+                theme = request.form.get('theme', 'dark')
+                assistant = request.form.get('assistant_enabled', '0')
+                notifications = request.form.get('notifications_enabled', '0')
+                if theme not in ('dark', 'light') or assistant not in ('0', '1') or notifications not in ('0', '1'):
+                    abort(400, description='Invalid preference value.')
+                conn.execute('UPDATE users SET theme = ?, assistant_enabled = ?, notifications_enabled = ? WHERE id = ?',
+                             (theme, int(assistant), int(notifications), session['user_id']))
+            else:
+                abort(400, description='Invalid settings section.')
+            conn.commit()
+            flash('Changes saved successfully.', 'success')
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            flash('That username is already taken.', 'error')
+        finally:
+            conn.close()
+        return redirect(url_for('user_settings'))
+    return render_template('user_settings.html')
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -167,7 +261,8 @@ def login():
 # ---------------------------------------------------------------------------
 
 
-@app.route("/logout")
+@app.route("/logout", methods=['POST'])
+@login_required
 def logout():
     session.clear()
     return redirect(url_for("login"))
@@ -227,7 +322,7 @@ def dashboard():
         categories=categories,
         total_spent=round(total_spent, 2),
         month_label=month_label,
-        alerts=alerts,
+        alerts=alerts if g.user['notifications_enabled'] else [],
         chart_labels=chart_labels,
         chart_values=chart_values,
     )
@@ -477,6 +572,8 @@ def articles():
 @app.route("/chat/send", methods=["POST"])
 @login_required
 def chat_send():
+    if not g.user['assistant_enabled']:
+        return jsonify(error='Stock Assistant is disabled in User Settings.'), 403
     data = request.get_json(silent=True) or {}
     history = data.get("history", [])
     if not isinstance(history, list):

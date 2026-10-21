@@ -6,6 +6,7 @@
   <h1>Welcome back</h1>
   <p class="subtitle">Log in to your budget dashboard</p>
   <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Username</label>
     <input type="text" name="username" required autofocus>
 

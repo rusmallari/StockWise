@@ -5,6 +5,7 @@
 <div class="card form-card">
   <h1>Add Transaction</h1>
   <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Name</label>
     <input type="text" name="name" placeholder="e.g. Groceries" required autofocus>
 

@@ -6,6 +6,7 @@
   <h1>Create your account</h1>
   <p class="subtitle">Start tracking your spending in minutes</p>
   <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Username</label>
     <input type="text" name="username" required autofocus>
 

@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ current_user['theme'] if current_user else 'dark' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}StockWise{% endblock %}</title>
   <link rel = "stylesheet" href = "{{ url_for('static', filename = 'style.css') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script>
+    if (window.Chart) {
+      const colors = getComputedStyle(document.documentElement);
+      Chart.defaults.color = colors.getPropertyValue('--muted').trim();
+      Chart.defaults.borderColor = colors.getPropertyValue('--border').trim();
+    }
+  </script>
 </head>
 <body>
   {% if session.get('user_id') %}
@@ -19,7 +27,7 @@
       <a href="{{ url_for('stock_search') }}"> Stocks</a>
       <a href="{{ url_for('stock_movers')}}"> Stock Movers </a>
       <a href="{{ url_for('articles') }}">Articles</a>
-      <a href="{{ url_for('logout') }}">Logout ({{ session.get('username') }})</a>
+      <a href="{{ url_for('user_settings') }}" {% if request.endpoint == 'user_settings' %}aria-current="page"{% endif %}>User Settings</a>
     </div>
   </nav>
   {% endif %}
@@ -27,11 +35,11 @@
   <!-- MAIN CONTENT AREA -->
   <main class="container">
     <!-- FLASH MESSAGES -->
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="flash">
-          {% for message in messages %}
-            <p>{{ message }}</p>
+        <div aria-live="polite">
+          {% for category, message in messages %}
+            <p class="flash flash-{{ category }}">{{ message }}</p>
           {% endfor %}
         </div>
       {% endif %}
@@ -39,7 +47,7 @@
 
     {% block content %}{% endblock %}
   </main>
-  {%if session.get('user_id')%}
+  {%if current_user and current_user['assistant_enabled']%}
     <button id = "chat-toggle" class = "chat-toggle" type = "button"> Stocks Assistant! </button>
     <div id = "chat-panel" class = "chat-panel">
       <div class = "chat-header">

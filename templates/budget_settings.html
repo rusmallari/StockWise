@@ -191,6 +191,7 @@
 
   <!-- Saves the user's budget changes -->
   <form method="POST" class="budget-layout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <!-- Shows existing budget categories and their limits -->
     <section class="card budget-panel">

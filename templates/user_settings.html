@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}User Settings - StockWise{% endblock %}
+{% block content %}
+<div class="dashboard-header settings-header">
+  <h1>User Settings</h1>
+  <p class="subtitle">Signed in as {{ current_user['username'] }}</p>
+  <button class="btn-primary settings-save" type="submit" form="settings-preferences" aria-describedby="preferences-help">Save Changes</button>
+  <p class="subtitle" id="preferences-help">Save Changes applies your appearance, assistant, and notification preferences across StockWise.</p>
+</div>
+
+<div class="settings-layout">
+  <section class="card">
+    <h2>Profile Information</h2>
+    <p class="subtitle">Your username is also your login name. Use the updated name next time you log in.</p>
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="section" value="profile">
+      <label for="username">Username</label>
+      <input id="username" name="username" value="{{ current_user['username'] }}" maxlength="80" autocomplete="username" required>
+      <p class="subtitle" id="password-help">Leave all password fields blank to keep your current password.</p>
+      <label for="current-password">Current Password</label>
+      <input id="current-password" type="password" name="current_password" autocomplete="current-password" aria-describedby="password-help">
+      <label for="new-password">New Password</label>
+      <input id="new-password" type="password" name="new_password" autocomplete="new-password">
+      <label for="confirm-password">Confirm New Password</label>
+      <input id="confirm-password" type="password" name="confirm_password" autocomplete="new-password">
+      <button class="btn-primary settings-save" type="submit">Save Changes</button>
+    </form>
+  </section>
+  <form method="POST" class="settings-preferences" id="settings-preferences">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="section" value="preferences">
+    <section class="card">
+      <h2>Appearance</h2>
+      <label class="setting-row" for="light-mode">
+        <span><strong>Light Mode</strong><small>Off: Dark Mode · On: Light Mode</small></span>
+        <input class="setting-switch" type="checkbox" role="switch" id="light-mode" name="theme" value="light" {% if current_user['theme'] == 'light' %}checked{% endif %}>
+      </label>
+    </section>
+    <section class="card">
+      <h2>Stock Assistant</h2>
+      <label class="setting-row" for="assistant-enabled">
+        <span><strong>Enable Stock Assistant</strong><small>Show the Stocks Assistant! button and chat interface.</small></span>
+        <input class="setting-switch" type="checkbox" role="switch" id="assistant-enabled" name="assistant_enabled" value="1" {% if current_user['assistant_enabled'] %}checked{% endif %}>
+      </label>
+    </section>
+    <section class="card">
+      <h2>Notifications</h2>
+      <label class="setting-row" for="notifications-enabled">
+        <span><strong>Enable Notifications</strong><small>Show dashboard warnings when you approach or exceed a budget. No email or push notifications are sent.</small></span>
+        <input class="setting-switch" type="checkbox" role="switch" id="notifications-enabled" name="notifications_enabled" value="1" {% if current_user['notifications_enabled'] %}checked{% endif %}>
+      </label>
+    </section>
+  </form>
+  <section class="card">
+    <h2>Account Actions</h2>
+    <p class="subtitle">Log out of your StockWise account on this browser.</p>
+    <form method="POST" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn-primary settings-save" type="submit">Logout</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

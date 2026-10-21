@@ -78,7 +78,7 @@ form.addEventListener("submit", async (event) => {
     try {
         const response = await fetch("/chat/send", {
             method: "POST", 
-            headers: {"Content-Type": "application/json"}, 
+            headers: {"Content-Type": "application/json", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content},
             body: JSON.stringify({history: history})
         }); 
         const data = await response.json(); 
