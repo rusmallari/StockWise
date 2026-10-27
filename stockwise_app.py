@@ -272,6 +272,7 @@ def logout():
 # Dashboard / transaction history + circle charts
 # ---------------------------------------------------------------------------
 
+# DEMO 04 | FR6/FR7 | Flask provides spending and transaction data
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -432,7 +433,7 @@ def delete_transaction(txn_id):
 # ---------------------------------------------------------------------------
 # Budget settings
 # ---------------------------------------------------------------------------
-
+# DEMO 02 | FR4/FR5 | Flask saves budget changes to the database
 @app.route("/budget-settings", methods=["GET", "POST"])
 @login_required
 def budget_settings():
@@ -541,7 +542,7 @@ def stock_movers():
         "most_active", 6)
     return render_template("stock_movers.html", sections=movers)
 
-
+# DEMO 08 | FR16 | Flask receives the search and renders articles
 # NYT article search page
 @app.route("/articles", methods=["GET"])
 @login_required

@@ -155,6 +155,8 @@
     <a class="budget-edit-link" href="{{ url_for('budget_settings') }}">Edit limits</a>
   </div>
 
+
+  <!-- DEMO 03 | FR6/FR8 | Spending progress, remaining money, warning colors -->
   <div class="budget-progress-grid">
     {% for cat in categories %}
 
@@ -235,6 +237,7 @@
             </tr>
           </thead>
 
+          <!-- DEMO 05 | FR7 | Display transactions using Jinja -->
           <tbody>
             {% for t in transactions %}
               <tr>
@@ -263,7 +266,7 @@
   </section>
 </div>
 
-<!-- Create the chart using the spending data -->
+<!-- DEMO 06 | FR7 | Chart.js displays spending by category -->
 {% if chart_labels %}
 <script>
   const ctx = document.getElementById('spendingChart');
