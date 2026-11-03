@@ -80,10 +80,10 @@ def _get_company_profile(ticker: str):
 
 # gets the one year history of a company's stock daily closing prices
 # ticker example --> "AAPL" --> for Apple
-def _get_history(ticker: str):
+def _get_history(ticker: str, period="1y"):
     try:
         # returns a dataFrame, one row per trading day
-        history = yf.Ticker(ticker).history(period="1y")
+        history = yf.Ticker(ticker).history(period=period)
     except Exception:
         return None
     # if the table is empty return none
@@ -101,12 +101,18 @@ def _get_history(ticker: str):
         number = float(close)
         closes.append(round(number, 2))
 
+    volumes = []
+    for volume in history["Volume"]:
+        i_volume = int(volume)
+        volumes.append(i_volume)
+
     # return a dictionary of the company's ID ("symbol"), the list of dates, and the
     # corresponding list of closes
     return {
         "symbol": ticker,
         "dates": dates,
-        "closes": closes
+        "closes": closes,
+        "volumes": volumes
     }
 
 
@@ -247,13 +253,13 @@ def get_cache_db():
 # that gets the data internally. Each function calls the cached() function first to see if the
 # data is already in the database or if the data is still valid. If not, then it calls its own
 # fetch() function to get the new data.
-def get_history(ticker: str):
+def get_history(ticker: str, period="1y"):
     usable = ticker.strip().upper()
 
     def fetch():
-        return _get_history(usable)
+        return _get_history(usable, period)
 
-    return cached(f"history:{usable}", VALID_TIME_LEFT_HISTORY, fetch)
+    return cached(f"history:{usable}:{period}", VALID_TIME_LEFT_HISTORY, fetch)
 
 
 def get_company_profile(ticker: str):
@@ -291,10 +297,4 @@ def gainers_losers_mostactive(kind: str, limit=10):
 
 if __name__ == "__main__":
 
-    # start = time.time()
-    # get_history("aapl")
-    # print("1st call:", round(time.time() - start, 2), "sec")
-    # start = time.time()
-    # get_history("aapl")
-    # print("2nd call:", round(time.time() - start, 2), "sec")
     get_history("aapl")
