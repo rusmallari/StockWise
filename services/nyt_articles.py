@@ -9,7 +9,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 NYT_URL = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
 
-
+# DEMO 09 | FR16 | Request NYT articles and handle API errors
 def search_articles(query):
     # Get the API key
     api_key = os.getenv("NYT_API_KEY")
