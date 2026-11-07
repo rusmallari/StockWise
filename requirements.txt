@@ -2,3 +2,4 @@ flask
 yfinance
 openai
 python-dotenv
+scikit-learn
