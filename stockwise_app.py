@@ -6,6 +6,7 @@ from datetime import datetime, date, timezone
 from collections import defaultdict
 from services import stocks_data, ai, user_context
 from services import nyt_articles
+from services import prediction
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, abort
@@ -129,7 +130,8 @@ def load_user_and_protect_requests():
         else:
             session['username'] = g.user['username']
     if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
-        token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token', '')
+        token = request.form.get(
+            'csrf_token') or request.headers.get('X-CSRF-Token', '')
         expected = session.get('_csrf_token', '')
         if not expected or not hmac.compare_digest(expected.encode('utf-8'), token.encode('utf-8')):
             if request.is_json:
@@ -159,7 +161,8 @@ def user_settings():
                 confirm_password = request.form.get('confirm_password', '')
                 if current_password or new_password or confirm_password:
                     if not current_password or not new_password or not confirm_password:
-                        flash('To change your password, fill in all three password fields.', 'error')
+                        flash(
+                            'To change your password, fill in all three password fields.', 'error')
                         return redirect(url_for('user_settings'))
                     if not check_password_hash(g.user['password_hash'], current_password):
                         flash('Current password is incorrect.', 'error')
@@ -525,7 +528,10 @@ def stock_detail(ticker):
 
     history = stocks_data.get_history(ticker)
     roi_and_risk = stocks_data.get_roi_and_risk(ticker)
-    return render_template("stock_detail.html", profile=profile, history=history, risk=roi_and_risk)
+    company_prediction = prediction.predict_next_week(ticker)
+
+    return render_template("stock_detail.html", profile=profile, history=history, risk=roi_and_risk,
+                           prediction=company_prediction)
 
 
 # ---------------------------------------------------------------------------
@@ -544,6 +550,8 @@ def stock_movers():
 
 # DEMO 08 | FR16 | Flask receives the search and renders articles
 # NYT article search page
+
+
 @app.route("/articles", methods=["GET"])
 @login_required
 def articles():
@@ -567,7 +575,6 @@ def articles():
 
 # Connect the browser with the chatbot. Data is what is received from the browser as json, which
 # is the conversation history between the user and the bot.
-
 
 
 @app.route("/chat/send", methods=["POST"])

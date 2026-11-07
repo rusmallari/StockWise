@@ -37,11 +37,35 @@
         <p> 1-Year Return: {{ "%.1f" | format(risk['roi'] * 100)}}% </p>
         <p> Volatility: {{ "%.1f" | format(risk['volatility'] * 100)}}% </p>
         <p> Risk: {{ risk['risk']}} </p>
-
         <p> Based on the past year of prices</p>
     {%else%}
         <p class = "empty-state"> Not enough price history to confidently estimate return and risk </p>
     {%endif%}
+
+
+    <h2 class = "section-heading"> Next Week's Price Swings (Powered by Machine Learning) </h2>
+    {%if prediction is none%}
+        <p> Not enough price history to make a forecast</p>
+
+    {%elif prediction.reliability%}
+        {%if prediction.probability > 0.5%}
+            <p> {{prediction.label}} -- {{ "%.0f" | format(prediction.probability * 100)}}% likely </p>
+            <p> Our model expects {{profile['symbol']}}'s price to move around more than it has over the past 3 months</p>
+        {%else%}
+            <p> {{prediction.label}} -- {{ "%.0f" | format((1 - prediction.probability) * 100)}}% likely </p>
+            <p> Our model expects {{profile['symbol']}}'s price to move around less than it has over the past 3 months</p>
+        {%endif%}
+        <p> Our model was right {{ "%.1f" | format(prediction.accuracy * 100)}}% of the time, vs. 
+            {{ "%.1f" | format(prediction.baseline * 100)}}% just guessing. </p>
+        
+    {%else%}
+        <p> Not available for {{profile['symbol']}}</p>
+        <p> Our model was not reliably better than a simple guess for this stock ({{ "%.1f" | format(prediction.accuracy * 100)}}% vs. 
+            {{ "%.1f" | format(prediction.baseline * 100)}}%), so we will not show a forecast</p>
+    {%endif%}
+    <p> Forecasts how much the stock's price may move based on past price patterns </p>
+
+
 </div>
 
 {% if history %}

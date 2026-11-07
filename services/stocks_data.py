@@ -37,7 +37,7 @@ def _search(query: str) -> list:
     # an equity quotetype; insert the name, symbol, and the exchange name into the new dictionary
     # and add it to the filtered list
     for match in matches:
-        if match.get("quoteType") == "EQUITY" and "." not in match.get("symbol", ""):
+        if match.get("quoteType") in ("EQUITY", "ETF") and "." not in match.get("symbol", ""):
             each_item = {}
             each_item["symbol"] = match.get("symbol")
             each_item["name"] = match.get("longname") or match.get(
@@ -80,7 +80,7 @@ def _get_company_profile(ticker: str):
 
 # gets the one year history of a company's stock daily closing prices
 # ticker example --> "AAPL" --> for Apple
-def _get_history(ticker: str, period="1y"):
+def _get_history(ticker: str, period="5y"):
     try:
         # returns a dataFrame, one row per trading day
         history = yf.Ticker(ticker).history(period=period)
