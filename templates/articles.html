@@ -4,210 +4,135 @@
 {% block content %}
 
 <style>
-  /* Main articles page */
-  .articles-page {
-    max-width: 1000px;
-    margin: 0 auto;
+  .news-page { display: grid; gap: 24px; }
+  .news-header h1 { font-size: 2rem; margin: 0 0 8px; }
+  .news-header p { color: var(--muted); margin: 0; line-height: 1.6; }
+
+  .news-search { padding: 26px; border-radius: 15px; }
+  .news-search h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  .news-search p { color: var(--muted); font-size: 0.88rem; margin: 0 0 20px; }
+  .news-form { display: flex; gap: 12px; }
+  .news-form input {
+    flex: 1; min-width: 0; min-height: 47px;
+    padding: 12px 15px; border-radius: 9px;
+  }
+  .news-form .btn-primary {
+    width: auto; margin: 0; padding: 12px 24px;
+    border-radius: 9px; white-space: nowrap;
   }
 
-  .articles-header {
-    margin-bottom: 24px;
+  .news-heading {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap;
   }
-
-  .articles-header h1 {
-    margin-bottom: 8px;
+  .news-heading h2 { font-size: 1.15rem; margin: 0; }
+  .news-count { color: var(--muted); font-size: 0.85rem; }
+  .news-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
-
-  .articles-header p {
-    color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.5;
+  .news-card {
+    display: flex; flex-direction: column; padding: 24px;
+    border-radius: 14px; transition: border-color 0.2s;
   }
-/* Search form */
-  .articles-search {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 28px;
+  .news-card:hover { border-color: var(--primary); }
+  .news-meta {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    color: var(--muted); font-size: 0.78rem; margin-bottom: 15px;
   }
-
-  .articles-search input {
-    flex: 1;
-    min-width: 0;
-    padding: 12px;
+  .news-tag {
+    color: var(--primary); background: var(--card-bg-alt);
+    border-radius: 7px; padding: 5px 9px; font-weight: 600;
   }
-
-  .articles-search button {
-    width: auto;
-    margin: 0;
-    padding: 12px 24px;
-    white-space: nowrap;
+  .news-card h3 { font-size: 1.08rem; line-height: 1.45; margin: 0 0 12px; }
+  .news-summary {
+    color: var(--muted); font-size: 0.88rem;
+    line-height: 1.65; margin: 0 0 20px;
   }
-
-  /* Article results */
-  .articles-results {
-    display: grid;
-    gap: 12px;
+  .news-link {
+    margin-top: auto; color: var(--primary);
+    text-decoration: none; font-size: 0.88rem; font-weight: 600;
   }
-
-  .article-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
+  .news-link:hover { text-decoration: underline; }
+  .news-message {
+    padding: 35px; text-align: center; color: var(--muted);
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 12px;
   }
+  .news-error { color: var(--danger); }
 
-  .article-details {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 10px;
-    color: var(--muted);
-    font-size: 0.8rem;
+  @media (max-width: 700px) {
+    .news-grid { grid-template-columns: 1fr; }
+    .news-header h1 { font-size: 1.6rem; }
   }
-
-  .article-card h2 {
-    font-size: 1.08rem;
-    font-weight: 600;
-    margin: 0 0 10px;
-    line-height: 1.4;
-  }
-
-  .article-card p {
-    color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    margin: 0 0 14px;
-  }
-
-  .article-link {
-    color: var(--primary);
-    text-decoration: none;
-    font-size: 0.88rem;
-    font-weight: 500;
-  }
-
-  .article-link:hover {
-    text-decoration: underline;
-  }
-
-  /* Message shown when no results are found */
-  .articles-message {
-    padding: 32px 20px;
-    text-align: center;
-    color: var(--muted);
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.9rem;
-  }
-
-  .articles-error {
-    color: var(--danger);
-  }
-
-  /* Adjust search form for smaller screens */
-  @media (max-width: 600px) {
-    .articles-search {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .articles-search button {
-      width: 100%;
-    }
-
-    .article-card {
-      padding: 16px;
-    }
+  @media (max-width: 480px) {
+    .news-form { flex-direction: column; }
+    .news-form .btn-primary { width: 100%; }
+    .news-search, .news-card { padding: 19px; }
   }
 </style>
 
-<div class="articles-page">
-
-  <!-- Page header -->
-  <div class="articles-header">
+<div class="news-page">
+  <header class="news-header">
     <h1>Financial Articles</h1>
-    <p>
-      Search for financial news, stock market updates,
-      and articles about investing.
-    </p>
-  </div>
+    <p>Stay informed with financial news from The New York Times.</p>
+  </header>
 
-<!-- DEMO 07 | FR16 | Financial articles search form -->
-  <!-- Search for NYT articles -->
-  <form method="GET" class="articles-search">
-    <input
-      type="search"
-      name="q"
-      value="{{ query or '' }}"
-      placeholder="Search stocks, investing, economy..."
-      aria-label="Search financial articles"
-      required
-    >
+  <section class="card news-search">
+    <h2>Search Financial News</h2>
+    <p>Search companies, investing, market trends, or the economy.</p>
 
-    <button type="submit" class="btn-primary">
-      Search Articles
-    </button>
-  </form>
+    <!-- DEMO 07 | FR16 | Financial articles search form -->
+    <form method="GET" action="{{ url_for('articles') }}" class="news-form">
+      <input type="search" name="q" value="{{ query or '' }}"
+             placeholder="Search Tesla, NVIDIA, inflation..."
+             aria-label="Search financial articles" required>
+      <button type="submit" class="btn-primary">Search Articles</button>
+    </form>
+  </section>
 
-  <!-- Show API errors -->
   {% if error %}
-    <div class="articles-message articles-error">
-      {{ error }}
+    <div class="news-message news-error">{{ error }}</div>
+
+  {% elif articles %}
+    <div class="news-heading">
+      <h2>Search Results</h2>
+      <span class="news-count">{{ articles|length }} articles found</span>
     </div>
 
-  <!-- Display articles returned from NYT -->
-  {% elif articles %}
-
-    <div class="articles-results">
-
+    <div class="news-grid">
       {% for article in articles %}
-      <article class="article-card">
+        <article class="card news-card">
+          <div class="news-meta">
+            <span class="news-tag">{{ article['section'] or 'News' }}</span>
+            <span>{{ article['date'] }}</span>
+            <span>New York Times</span>
+          </div>
 
-        <!-- Article date and category -->
-        <div class="article-details">
-          <span>{{ article['section'] }}</span>
-          <span>{{ article['date'] }}</span>
-          <span>The New York Times</span>
-        </div>
+          <h3>{{ article['title'] }}</h3>
 
-        <!-- Article headline -->
-        <h2>{{ article['title'] }}</h2>
+          {% if article['summary'] %}
+            <p class="news-summary">{{ article['summary'] }}</p>
+          {% endif %}
 
-        <!-- Short description -->
-        {% if article['summary'] %}
-          <p>{{ article['summary'] }}</p>
-        {% endif %}
-
-        <!-- Link to the full article -->
-        {% if article['url'] %}
-          <a
-            class="article-link"
-            href="{{ article['url'] }}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read Article →
-          </a>
-        {% endif %}
-
-      </article>
+          {% if article['url'] %}
+            <a class="news-link" href="{{ article['url'] }}"
+               target="_blank" rel="noopener noreferrer">
+              Read Article →
+            </a>
+          {% endif %}
+        </article>
       {% endfor %}
-
     </div>
 
   {% elif query %}
-    <div class="articles-message">
-      No articles found for "{{ query }}".
-    </div>
+    <div class="news-message">No articles found for "{{ query }}".</div>
 
   {% else %}
-    <div class="articles-message">
-      Enter a topic above to search for financial articles.
+    <div class="news-message">
+      Search for a financial topic to see the latest available articles.
     </div>
   {% endif %}
-
 </div>
 
 {% endblock %}

@@ -1,5 +1,8 @@
 import os
 import sqlite3
+import csv
+import io
+import re
 import secrets
 import hmac
 from datetime import datetime, date, timezone
@@ -9,7 +12,7 @@ from services import nyt_articles
 from services import prediction
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, abort, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -329,6 +332,190 @@ def dashboard():
         alerts=alerts if g.user['notifications_enabled'] else [],
         chart_labels=chart_labels,
         chart_values=chart_values,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Monthly Spending Reports
+# ---------------------------------------------------------------------------
+
+def selected_report_month():
+    month = request.args.get("month", date.today().strftime("%Y-%m"))
+
+    if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", month or ""):
+        abort(400, description="Month must use YYYY-MM format.")
+
+    try:
+        date.fromisoformat(month + "-01")
+    except ValueError:
+        abort(400, description="Invalid report month.")
+
+    return month
+
+
+def get_report_data(user_id, month):
+    conn = get_db()
+
+    # Get transactions for the selected month
+    transactions = conn.execute(
+        "SELECT date, name, category, amount FROM transactions "
+        "WHERE user_id = ? AND substr(date, 1, 7) = ? "
+        "ORDER BY date DESC, id DESC",
+        (user_id, month)
+    ).fetchall()
+
+    # Get the user's budget categories
+    categories = conn.execute(
+        "SELECT name, monthly_limit FROM categories "
+        "WHERE user_id = ? ORDER BY name",
+        (user_id,)
+    ).fetchall()
+
+    conn.close()
+
+    limits = {
+        cat["name"]: max(cat["monthly_limit"] or 0, 0)
+        for cat in categories
+    }
+
+    # Calculate spending by category
+    spending = defaultdict(float)
+
+    for txn in transactions:
+        spending[txn["category"]] += txn["amount"]
+
+    breakdown = []
+
+    for name in sorted(set(limits) | set(spending)):
+        spent = round(spending.get(name, 0), 2)
+        limit = round(limits.get(name, 0), 2)
+
+        percent = round(spent / limit * 100) if limit > 0 else 0
+
+        breakdown.append({
+            "name": name,
+            "spent": spent,
+            "limit": limit,
+            "percent": percent,
+            "bar_percent": min(100, max(0, percent))
+        })
+
+    breakdown.sort(key=lambda item: item["spent"], reverse=True)
+
+    # Calculate monthly totals
+    total_spent = round(
+        sum(txn["amount"] for txn in transactions), 2
+    )
+
+    total_budget = round(sum(limits.values()), 2)
+    remaining = round(total_budget - total_spent, 2)
+
+    # Get the last six months
+    year, month_number = map(int, month.split("-"))
+    recent_months = []
+
+    for offset in range(5, -1, -1):
+        index = year * 12 + month_number - 1 - offset
+        y, m = divmod(index, 12)
+
+        if y < 1:
+            continue
+
+        recent_months.append(f"{y:04d}-{m + 1:02d}")
+
+    trend = {name: 0 for name in recent_months}
+
+    if recent_months:
+        conn = get_db()
+
+        monthly_totals = conn.execute(
+            "SELECT substr(date, 1, 7) AS month, "
+            "SUM(amount) AS total "
+            "FROM transactions "
+            "WHERE user_id = ? "
+            "AND substr(date, 1, 7) >= ? "
+            "AND substr(date, 1, 7) <= ? "
+            "GROUP BY substr(date, 1, 7)",
+            (user_id, recent_months[0], recent_months[-1])
+        ).fetchall()
+
+        conn.close()
+
+        for row in monthly_totals:
+            trend[row["month"]] = round(row["total"] or 0, 2)
+
+    return {
+        "transactions": transactions,
+        "breakdown": breakdown,
+        "total_spent": total_spent,
+        "total_budget": total_budget,
+        "remaining": remaining,
+        "transaction_count": len(transactions),
+        "chart_labels": [
+            item["name"] for item in breakdown if item["spent"] > 0
+        ],
+        "chart_values": [
+            item["spent"] for item in breakdown if item["spent"] > 0
+        ],
+        "trend_labels": [
+            date.fromisoformat(m + "-01").strftime("%b %Y")
+            for m in recent_months
+        ],
+        "trend_values": [trend[m] for m in recent_months]
+    }
+
+
+# Display monthly reports
+@app.route("/reports")
+@login_required
+def reports():
+    month = selected_report_month()
+    data = get_report_data(session["user_id"], month)
+
+    return render_template(
+        "reports.html",
+        month=month,
+        month_label=date.fromisoformat(
+            month + "-01"
+        ).strftime("%B %Y"),
+        **data
+    )
+
+
+# Download monthly transactions as CSV
+@app.route("/reports/export")
+@login_required
+def export_report():
+    month = selected_report_month()
+    data = get_report_data(session["user_id"], month)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["Date", "Name", "Category", "Amount"])
+
+    # Prevent spreadsheet formulas in exported text
+    def safe_text(value):
+        text = str(value)
+        if text.lstrip().startswith(("=", "+", "-", "@")):
+            return "'" + text
+        return text
+
+    for txn in data["transactions"]:
+        writer.writerow([
+            safe_text(txn["date"]),
+            safe_text(txn["name"]),
+            safe_text(txn["category"]),
+            f'{txn["amount"]:.2f}'
+        ])
+
+    return Response(
+        "\ufeff" + output.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition":
+            f'attachment; filename="stockwise-report-{month}.csv"'
+        }
     )
 
 

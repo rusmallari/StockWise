@@ -1,46 +1,116 @@
-{%extends "base.html"%}
-{%block title%} Stock Movers - StockWise {%endblock%}
 
-{%block content%}
+{% extends "base.html" %}
+{% block title %}Stock Movers - StockWise{% endblock %}
+{% block content %}
 
-{%for title, stocks in sections.items()%}
-    <h2 class = "section-heading"> {{title}}</h2>
-    {%if stocks%}
-        <table class = "txn-table">
+<style>
+  .movers-page { display: grid; gap: 22px; }
+  .movers-header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .movers-header h1 { font-size: 2rem; margin: 0 0 8px; }
+  .movers-header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .movers-link {
+    padding: 11px 16px; color: var(--text); background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 9px;
+    text-decoration: none; font-size: 0.88rem;
+  }
+  .movers-link:hover { border-color: var(--primary); }
+  .movers-panel { padding: 24px; border-radius: 15px; }
+  .movers-panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 18px;
+  }
+  .movers-panel-head h2 { margin: 0; font-size: 1.15rem; }
+  .movers-count { color: var(--muted); font-size: 0.83rem; }
+  .movers-table-wrap { overflow-x: auto; }
+  .movers-table { width: 100%; border-collapse: collapse; }
+  .movers-table th {
+    color: var(--muted); font-size: 0.78rem; font-weight: 600;
+    text-align: left; padding: 13px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .movers-table td { padding: 15px 12px; border-bottom: 1px solid var(--border); }
+  .movers-table tr:last-child td { border-bottom: none; }
+  .movers-table tbody tr:hover { background: var(--card-bg-alt); }
+  .movers-name { color: var(--text); font-weight: 600; text-decoration: none; }
+  .movers-name:hover { color: var(--primary); }
+  .movers-symbol {
+    display: inline-block; padding: 6px 10px; color: var(--primary);
+    background: rgba(91, 140, 255, 0.12); border-radius: 7px;
+    font-weight: 650; font-size: 0.82rem;
+  }
+  .movers-number { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .movers-up { color: var(--success); font-weight: 650; }
+  .movers-down { color: var(--danger); font-weight: 650; }
+  .movers-empty { color: var(--muted); padding: 18px 0; margin: 0; }
+  @media (max-width: 650px) {
+    .movers-header h1 { font-size: 1.6rem; }
+    .movers-panel { padding: 17px; }
+    .movers-table { font-size: 0.84rem; }
+    .movers-table th, .movers-table td { padding: 12px 8px; }
+  }
+</style>
+
+<div class="movers-page">
+  <header class="movers-header">
+    <div>
+      <h1>Stock Movers</h1>
+      <p>Explore top gainers, losers, and most active stocks.</p>
+    </div>
+    <a class="movers-link" href="{{ url_for('stock_search') }}">Search Stocks</a>
+  </header>
+
+  {% for title, stocks in sections.items() %}
+    <section class="card movers-panel">
+      <div class="movers-panel-head">
+        <h2>{{ title }}</h2>
+        <span class="movers-count">{{ stocks|length if stocks else 0 }} stocks</span>
+      </div>
+
+      {% if stocks %}
+        <div class="movers-table-wrap">
+          <table class="movers-table">
             <thead>
-                <tr><th> Company </th><th> Symbol </th><th> Price </th><th> Change </th></tr>
+              <tr>
+                <th>Company</th>
+                <th>Symbol</th>
+                <th class="movers-number">Price</th>
+                <th class="movers-number">Change</th>
+              </tr>
             </thead>
             <tbody>
-                {%for stock in stocks%}
+              {% for stock in stocks %}
                 <tr>
-                <td><a href = "{{url_for('stock_detail', ticker = stock['symbol'])}}"> {{stock['name']}} </a></td>
-                <td> {{stock['symbol']}}</td>
-                <td>
-                {%if stock['price'] is not none %}
-                    ${{"%.2f"|format(stock['price'])}} 
-                {%else%}
-                    -  
-                {%endif%}
-                </td>
-                <td>
-                {%if stock['change_percent'] is not none%}
-                    {{"%+.2f"|format(stock['change_percent'])}}% 
-                {%else%}
-                    -
-                {%endif%}
-                </td>
+                  <td>
+                    <a class="movers-name" href="{{ url_for('stock_detail', ticker=stock['symbol']) }}">
+                      {{ stock['name'] }}
+                    </a>
+                  </td>
+                  <td><span class="movers-symbol">{{ stock['symbol'] }}</span></td>
+                  <td class="movers-number">
+                    {% if stock['price'] is not none %}
+                      ${{ '%.2f'|format(stock['price']) }}
+                    {% else %}N/A{% endif %}
+                  </td>
+                  <td class="movers-number">
+                    {% if stock['change_percent'] is not none %}
+                      <span class="{% if stock['change_percent'] > 0 %}movers-up{% elif stock['change_percent'] < 0 %}movers-down{% endif %}">
+                        {{ '%+.2f'|format(stock['change_percent']) }}%
+                      </span>
+                    {% else %}N/A{% endif %}
+                  </td>
                 </tr>
-                {%endfor%}
+              {% endfor %}
             </tbody>
-        </table>
-    
-    {%else%}
-        <p class = "empty-state"> This list is not available right now. </p>
+          </table>
+        </div>
+      {% else %}
+        <p class="movers-empty">Market data is unavailable for this list right now.</p>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
 
-    {%endif%}
-
-{%endfor%}
-
-
-
-{%endblock%}
+{% endblock %}

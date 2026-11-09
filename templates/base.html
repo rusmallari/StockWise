@@ -1,67 +1,108 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="{{ current_user['theme'] if current_user else 'dark' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+
   <title>{% block title %}StockWise{% endblock %}</title>
-  <link rel = "stylesheet" href = "{{ url_for('static', filename = 'style.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
   <script>
     if (window.Chart) {
-      const colors = getComputedStyle(document.documentElement);
-      Chart.defaults.color = colors.getPropertyValue('--muted').trim();
-      Chart.defaults.borderColor = colors.getPropertyValue('--border').trim();
+      const styles = getComputedStyle(document.documentElement);
+      Chart.defaults.color = styles.getPropertyValue('--muted').trim();
+      Chart.defaults.borderColor = styles.getPropertyValue('--border').trim();
     }
   </script>
 </head>
+
 <body>
   {% if session.get('user_id') %}
-  <!-- NAVIGATION BAR -->
-  <nav class="navbar">
-    <div class="brand">StockWise</div>
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="brand" href="{{ url_for('dashboard') }}">StockWise</a>
+
     <div class="nav-links">
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('add_transaction') }}">Add Transaction</a>
-      <a href="{{ url_for('budget_settings') }}">Budget Settings</a>
-      <a href="{{ url_for('stock_search') }}"> Stocks</a>
-      <a href="{{ url_for('stock_movers')}}"> Stock Movers </a>
-      <a href="{{ url_for('articles') }}">Articles</a>
-      <a href="{{ url_for('user_settings') }}" {% if request.endpoint == 'user_settings' %}aria-current="page"{% endif %}>User Settings</a>
+      <a href="{{ url_for('dashboard') }}"
+         {% if request.endpoint in ('dashboard', 'edit_transaction') %}aria-current="page"{% endif %}>
+        Dashboard
+      </a>
+
+      <a href="{{ url_for('reports') }}"
+         {% if request.endpoint == 'reports' %}aria-current="page"{% endif %}>
+        Reports
+      </a>
+
+      <a href="{{ url_for('add_transaction') }}"
+         {% if request.endpoint == 'add_transaction' %}aria-current="page"{% endif %}>
+        Add Transaction
+      </a>
+
+      <a href="{{ url_for('budget_settings') }}"
+         {% if request.endpoint == 'budget_settings' %}aria-current="page"{% endif %}>
+        Budget Settings
+      </a>
+
+      <a href="{{ url_for('stock_search') }}"
+         {% if request.endpoint in ('stock_search', 'stock_detail') %}aria-current="page"{% endif %}>
+        Stocks
+      </a>
+
+      <a href="{{ url_for('stock_movers') }}"
+         {% if request.endpoint == 'stock_movers' %}aria-current="page"{% endif %}>
+        Stock Movers
+      </a>
+
+      <a href="{{ url_for('articles') }}"
+         {% if request.endpoint == 'articles' %}aria-current="page"{% endif %}>
+        Articles
+      </a>
+
+      <a href="{{ url_for('user_settings') }}"
+         {% if request.endpoint == 'user_settings' %}aria-current="page"{% endif %}>
+        User Settings
+      </a>
     </div>
   </nav>
   {% endif %}
 
-  <!-- MAIN CONTENT AREA -->
   <main class="container">
-    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div aria-live="polite">
-          {% for category, message in messages %}
-            <p class="flash flash-{{ category }}">{{ message }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
+      {% for category, message in messages %}
+        <p class="flash flash-{{ category }}" role="status">
+          {{ message }}
+        </p>
+      {% endfor %}
     {% endwith %}
 
     {% block content %}{% endblock %}
   </main>
-  {%if current_user and current_user['assistant_enabled']%}
-    <button id = "chat-toggle" class = "chat-toggle" type = "button"> Stocks Assistant! </button>
-    <div id = "chat-panel" class = "chat-panel">
-      <div class = "chat-header">
-        StockWise Assistant
-        <button id = "chat-close" type = "button"> X </button>
-      </div>
-      <div id = "chat-messages" class = "chat-messages"></div>
-      <form id = "chat-form" class = "chat-form">
-        <input id = "chat-input" autocomplete = "off" maxlength = "2000" placeholder = "Ask a finance question">
-        <button type = "submit"> Send </button>
-      </form>
-    </div>
-    <script src = "{{url_for('static', filename = 'chat.js')}}" defer></script>
 
-  {%endif%}
+  {% if current_user and current_user['assistant_enabled'] %}
+  <button id = "chat-toggle" class="chat-toggle" type="button">
+    StockWise Assistant
+  </button>
+
+  <div id="chat-panel" class="chat-panel">
+    <div class="chat-header">
+      <span>StockWise Assistant</span>
+      <button id="chat-close" type="button" aria-label="Close chat">✕</button>
+    </div>
+
+    <div id="chat-messages" class="chat-messages"></div>
+
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" maxlength="2000"
+             placeholder="Ask a finance question"
+             aria-label="Chat message" autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
+  {% endif %}
 </body>
 </html>

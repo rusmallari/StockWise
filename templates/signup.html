@@ -1,20 +1,87 @@
+
 {% extends "base.html" %}
 {% block title %}Sign Up - StockWise{% endblock %}
 {% block content %}
-<!-- SIGNUP FORM -->
-<div class="card auth-card">
-  <h1>Create your account</h1>
-  <p class="subtitle">Start tracking your spending in minutes</p>
-  <form method="POST">
+
+<style>
+  .signup-page {
+    min-height: 65vh; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .signup-card {
+    width: 100%; max-width: 460px;
+    padding: 36px; border-radius: 16px;
+  }
+  .signup-brand {
+    display: inline-block; padding: 7px 12px; margin-bottom: 24px;
+    color: var(--primary); background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.82rem; font-weight: 700;
+  }
+  .signup-card h1 { font-size: 1.9rem; margin: 0 0 9px; }
+  .signup-subtitle {
+    color: var(--muted); font-size: 0.9rem; margin: 0 0 30px;
+  }
+  .signup-field { margin-bottom: 20px; }
+  .signup-field label {
+    margin: 0 0 9px; font-size: 0.82rem;
+    color: var(--muted); text-transform: none; letter-spacing: 0;
+  }
+  .signup-field input {
+    min-height: 47px; padding: 12px 14px; border-radius: 9px;
+  }
+  .signup-hint {
+    display: block; color: var(--muted);
+    font-size: 0.8rem; margin-top: 8px;
+  }
+  .signup-card .btn-primary {
+    min-height: 47px; border-radius: 9px; margin-top: 25px;
+  }
+  .signup-footer {
+    text-align: center; color: var(--muted);
+    font-size: 0.88rem; margin: 24px 0 0;
+  }
+  .signup-footer a { font-weight: 600; text-decoration: none; }
+  .signup-footer a:hover { text-decoration: underline; }
+  @media (max-width: 480px) {
+    .signup-card { padding: 24px; }
+    .signup-card h1 { font-size: 1.6rem; }
+  }
+</style>
+
+<div class="signup-page">
+  <section class="card signup-card">
+    <span class="signup-brand">StockWise</span>
+
+    <h1>Create an Account</h1>
+    <p class="signup-subtitle">Start managing your spending with StockWise.</p>
+
+    <form method="POST" action="{{ url_for('signup') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Username</label>
-    <input type="text" name="username" required autofocus>
 
-    <label>Password</label>
-    <input type="password" name="password" required>
+      <div class="signup-field">
+        <label for="signup-username">Username</label>
+        <input type="text" id="signup-username" name="username"
+               maxlength="80" placeholder="Choose a username"
+               autocomplete="username" required autofocus>
+      </div>
 
-    <button type="submit" class="btn-primary">Sign Up</button>
-  </form>
-  <p class="switch-auth">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+      <div class="signup-field">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" name="password"
+               placeholder="Create a password"
+               autocomplete="new-password" required>
+        <small class="signup-hint">Use a strong password to protect your account.</small>
+      </div>
+
+      <button type="submit" class="btn-primary">Create Account</button>
+    </form>
+
+    <p class="signup-footer">
+      Already have an account?
+      <a href="{{ url_for('login') }}">Log In</a>
+    </p>
+  </section>
 </div>
+
 {% endblock %}

@@ -4,307 +4,325 @@
 {% block content %}
 
 <style>
-  /* Budget section */
-  .budget-progress {
-    margin-bottom: 22px;
+  /* Dashboard page */
+  .sw-dashboard { display: grid; gap: 24px; }
+  .sw-dash-header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 20px; flex-wrap: wrap;
   }
-
-  .budget-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 18px;
+  .sw-dash-eyebrow {
+    color: var(--primary); font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 8px;
   }
-
-  .budget-section-header h2 {
-    margin: 0;
-    font-size: 1.1rem;
+  .sw-dash-header h1 { font-size: 2rem; margin: 0 0 7px; }
+  .sw-dash-subtitle { color: var(--muted); margin: 0; font-size: 0.92rem; }
+  .sw-dash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .sw-dash-button {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 42px; padding: 10px 16px; border-radius: 10px;
+    background: var(--primary); color: #fff; text-decoration: none;
+    font-size: 0.88rem; font-weight: 600;
   }
-
-  .budget-edit-link {
-    color: var(--primary);
-    text-decoration: none;
-    font-size: 0.88rem;
-  }
-
-  .budget-edit-link:hover {
-    text-decoration: underline;
-  }
-
-  /* Layout for the budget categories */
-  .budget-progress-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .budget-category-card {
-    padding: 16px;
+  .sw-dash-button:hover { background: var(--primary-hover); }
+  .sw-dash-button.secondary {
+    background: var(--card-bg-alt); color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--card-bg-alt);
   }
+  .sw-dash-button.secondary:hover { border-color: var(--primary); }
 
-  .budget-category-header,
-  .budget-category-amounts {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
+  /* Summary cards */
+  .sw-dash-stats {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
   }
-
-  .budget-category-header {
-    margin-bottom: 12px;
+  .sw-dash-stat { padding: 23px; border-radius: 16px; }
+  .sw-dash-stat-label { display: block; color: var(--muted); font-size: 0.84rem; }
+  .sw-dash-stat-value {
+    display: block; margin-top: 14px; color: var(--text);
+    font-size: clamp(1.3rem, 2.1vw, 1.95rem); font-weight: 750;
+    letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
   }
+  .sw-dash-stat-value.sw-danger { color: var(--danger); }
+  .sw-dash-stat-note { display: block; margin-top: 8px; color: var(--muted); font-size: 0.78rem; }
 
-  .budget-category-header strong {
-    font-size: 0.92rem;
+  /* Sections */
+  .sw-dash-panel { padding: 25px; border-radius: 16px; }
+  .sw-dash-section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 22px;
   }
+  .sw-dash-section-head h2 { margin: 0; font-size: 1.1rem; }
+  .sw-dash-section-head p { margin: 6px 0 0; color: var(--muted); font-size: 0.83rem; }
+  .sw-dash-text-link { color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+  .sw-dash-text-link:hover { text-decoration: underline; }
 
-  .budget-category-header span,
-  .budget-category-amounts {
-    color: var(--muted);
-    font-size: 0.82rem;
+  /* Budget category cards */
+  .sw-dash-budget-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
   }
-
-  .budget-category-amounts {
-    margin-top: 10px;
+  .sw-dash-budget-item {
+    padding: 18px; background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 12px;
   }
-
-  .budget-category-amounts span:last-child {
-    text-align: right;
+  .sw-dash-budget-top, .sw-dash-budget-bottom {
+    display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
   }
+  .sw-dash-budget-top { margin-bottom: 15px; }
+  .sw-dash-budget-top strong { font-size: 0.91rem; }
+  .sw-dash-budget-top span, .sw-dash-budget-bottom { color: var(--muted); font-size: 0.81rem; }
+  .sw-dash-budget-top span, .sw-dash-budget-bottom span:last-child { text-align: right; }
+  .sw-dash-track { height: 9px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .sw-dash-fill { height: 100%; background: var(--primary); border-radius: inherit; }
+  .sw-dash-budget-item.near-limit .sw-dash-fill { background: var(--warning); }
+  .sw-dash-budget-item.over-limit .sw-dash-fill { background: var(--danger); }
+  .sw-dash-budget-item.over-limit .sw-dash-budget-bottom span:last-child { color: var(--danger); }
+  .sw-dash-budget-bottom { margin-top: 11px; }
 
-  /* Budget progress bars */
-  .budget-track {
-    height: 7px;
-    border-radius: 5px;
-    background: var(--border);
-    overflow: hidden;
+  /* Chart and transactions */
+  .sw-dash-bottom-grid {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 20px; align-items: start;
   }
-
-  .budget-fill {
-    height: 100%;
-    background: var(--primary);
-    border-radius: 5px;
+  .sw-dash-chart { height: 270px; max-width: 380px; margin: 0 auto; }
+  .sw-dash-empty { padding: 35px 12px; color: var(--muted); text-align: center; font-size: 0.9rem; }
+  .sw-dash-empty a { display: inline-block; margin-top: 12px; }
+  .sw-dash-table-wrap { max-height: 420px; overflow: auto; }
+  .sw-dash-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .sw-dash-table th {
+    position: sticky; top: 0; z-index: 1; background: var(--card-bg);
+    color: var(--muted); text-align: left; text-transform: uppercase;
+    font-size: 0.72rem; letter-spacing: 0.04em;
+    padding: 12px 10px; border-bottom: 1px solid var(--border);
   }
+  .sw-dash-table td { padding: 14px 10px; border-bottom: 1px solid var(--border); }
+  .sw-dash-table tbody tr:hover { background: var(--card-bg-alt); }
+  .sw-dash-table .amount { text-align: right; font-weight: 600; white-space: nowrap; }
+  .sw-dash-table th.amount { text-align: right; }
+  .sw-dash-table .actions { text-align: right; white-space: nowrap; }
+  .sw-dash-table .actions a { margin-right: 10px; font-size: 0.82rem; }
+  .sw-dash-table .actions form { display: inline; }
+  .sw-dash-table .actions button { margin: 0; }
+  .sw-dash-alerts { display: grid; gap: 8px; }
+  .sw-dash-alerts .alert-item { margin: 0; }
 
-  .budget-category-card.near-limit .budget-fill {
-    background: var(--warning);
+  @media (max-width: 1050px) {
+    .sw-dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sw-dash-bottom-grid { grid-template-columns: 1fr; }
   }
-
-  .budget-category-card.over-limit .budget-fill {
-    background: var(--danger);
+  @media (max-width: 700px) {
+    .sw-dash-budget-grid { grid-template-columns: 1fr; }
+    .sw-dash-header h1 { font-size: 1.6rem; }
   }
-
-  .budget-category-card.over-limit .budget-category-amounts span:last-child {
-    color: var(--danger);
-  }
-
-  .budget-category-card.no-limit .budget-category-amounts {
-    margin-top: 0;
-  }
-
-  /* Chart sizing */
-  .spending-chart-wrap {
-    width: 100%;
-    max-width: 310px;
-    height: 220px;
-    margin: 0 auto;
-  }
-
-  .transaction-table-wrap {
-    overflow-x: auto;
-  }
-
-  /* Smaller screens */
-  @media (max-width: 720px) {
-    .budget-progress-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .budget-section-header {
-      align-items: flex-start;
-    }
+  @media (max-width: 480px) {
+    .sw-dash-stats { grid-template-columns: 1fr; }
+    .sw-dash-panel, .sw-dash-stat { padding: 18px; }
+    .sw-dash-actions { width: 100%; }
+    .sw-dash-button { flex: 1; }
   }
 </style>
 
-<!-- Dashboard header -->
-<div class="dashboard-header">
-  <h1>Your Dashboard</h1>
-  <div class="total-spent">
-    Spent in {{ month_label }}:
-    <strong>${{ "%.2f"|format(total_spent) }}</strong>
-  </div>
-</div>
+{% set summary = namespace(budget=0) %}
+{% for cat in categories %}
+  {% set summary.budget = summary.budget + (cat['monthly_limit']|float) %}
+{% endfor %}
+{% set budget_remaining = summary.budget - total_spent %}
 
-<!-- Show budget warnings if there are any -->
-{% if alerts %}
-<div class="alerts">
-  {% for alert in alerts %}
-    <div class="alert-item">⚠️ {{ alert }}</div>
-  {% endfor %}
-</div>
-{% endif %}
+<div class="sw-dashboard">
+  <header class="sw-dash-header">
+    <div>
+      <p class="sw-dash-eyebrow">Your financial overview</p>
+      <h1>Your Dashboard</h1>
+      <p class="sw-dash-subtitle">Here's your spending summary for {{ month_label }}.</p>
+    </div>
+    <div class="sw-dash-actions">
+      <a class="sw-dash-button secondary" href="{{ url_for('reports') }}">View Reports</a>
+      <a class="sw-dash-button" href="{{ url_for('add_transaction') }}">+ Add Transaction</a>
+    </div>
+  </header>
 
-<!-- Show spending and remaining money for each budget -->
-<section class="card budget-progress">
-  <div class="budget-section-header">
-    <h2>Monthly Budget Progress</h2>
-    <a class="budget-edit-link" href="{{ url_for('budget_settings') }}">Edit limits</a>
-  </div>
+  <section class="sw-dash-stats" aria-label="Spending summary">
+    <article class="card sw-dash-stat">
+      <span class="sw-dash-stat-label">Spent this month</span>
+      <strong class="sw-dash-stat-value">${{ '%.2f'|format(total_spent) }}</strong>
+      <span class="sw-dash-stat-note">{{ month_label }}</span>
+    </article>
+    <article class="card sw-dash-stat">
+      <span class="sw-dash-stat-label">Monthly budget</span>
+      <strong class="sw-dash-stat-value">
+        {% if summary.budget > 0 %}${{ '%.2f'|format(summary.budget) }}{% else %}Not set{% endif %}
+      </strong>
+      <span class="sw-dash-stat-note">Combined category limits</span>
+    </article>
+    <article class="card sw-dash-stat">
+      <span class="sw-dash-stat-label">Budget remaining</span>
+      <strong class="sw-dash-stat-value{% if summary.budget > 0 and budget_remaining < 0 %} sw-danger{% endif %}">
+        {% if summary.budget > 0 %}${{ '%.2f'|format(budget_remaining) }}{% else %}Not set{% endif %}
+      </strong>
+      <span class="sw-dash-stat-note">{% if summary.budget > 0 and budget_remaining < 0 %}Over budget{% else %}Based on monthly limits{% endif %}</span>
+    </article>
+    <article class="card sw-dash-stat">
+      <span class="sw-dash-stat-label">Saved transactions</span>
+      <strong class="sw-dash-stat-value">{{ transactions|length }}</strong>
+      <span class="sw-dash-stat-note">All recorded transactions</span>
+    </article>
+  </section>
 
+  {% if alerts %}
+    <div class="sw-dash-alerts" aria-live="polite">
+      {% for alert in alerts %}
+        <div class="alert-item">⚠ {{ alert }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-  <!-- DEMO 03 | FR6/FR8 | Spending progress, remaining money, warning colors -->
-  <div class="budget-progress-grid">
-    {% for cat in categories %}
+  <section class="card sw-dash-panel">
+    <div class="sw-dash-section-head">
+      <div>
+        <h2>Monthly Budget Progress</h2>
+        <p>Track each category against its spending limit.</p>
+      </div>
+      <a class="sw-dash-text-link" href="{{ url_for('budget_settings') }}">Edit budget limits</a>
+    </div>
 
-      <!-- Calculate how much of the budget was used -->
-      {% set limit = cat['monthly_limit']|float %}
-      {% set spent = chart_values[chart_labels.index(cat['name'])] if cat['name'] in chart_labels else 0 %}
-      {% set remaining = limit - spent %}
-      {% set percent = (spent / limit * 100) if limit > 0 else 0 %}
-      {% set bar_width = [[percent, 0]|max, 100]|min %}
+    <!-- DEMO 03 | FR6/FR8 | Spending progress, remaining money, warning colors -->
+    <div class="sw-dash-budget-grid">
+      {% for cat in categories %}
+        {% set limit = cat['monthly_limit']|float %}
+        {% set spent = chart_values[chart_labels.index(cat['name'])] if cat['name'] in chart_labels else 0 %}
+        {% set remaining = limit - spent %}
+        {% set percent = (spent / limit * 100) if limit > 0 else 0 %}
+        {% set bar_width = [[percent, 0]|max, 100]|min %}
 
-      <div class="budget-category-card{% if limit <= 0 %} no-limit{% elif spent > limit %} over-limit{% elif spent >= limit * 0.8 %} near-limit{% endif %}">
-        <div class="budget-category-header">
-          <strong>{{ cat['name'] }}</strong>
-          <span>{% if limit > 0 %}${{ "%.2f"|format(limit) }} limit{% else %}No limit set{% endif %}</span>
+        <div class="sw-dash-budget-item{% if limit <= 0 %} no-limit{% elif spent > limit %} over-limit{% elif spent >= limit * 0.8 %} near-limit{% endif %}">
+          <div class="sw-dash-budget-top">
+            <strong>{{ cat['name'] }}</strong>
+            <span>{% if limit > 0 %}${{ '%.2f'|format(limit) }} limit{% else %}No limit{% endif %}</span>
+          </div>
+          {% if limit > 0 %}
+            <div class="sw-dash-track" role="progressbar" aria-label="{{ cat['name'] }} budget used"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ bar_width|round|int }}">
+              <div class="sw-dash-fill" style="width: {{ bar_width }}%;"></div>
+            </div>
+            <div class="sw-dash-budget-bottom">
+              <span>Spent ${{ '%.2f'|format(spent) }}</span>
+              {% if remaining < 0 %}
+                <span>Over by ${{ '%.2f'|format(-remaining) }}</span>
+              {% else %}
+                <span>${{ '%.2f'|format(remaining) }} left</span>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="sw-dash-budget-bottom">
+              <span>Spent ${{ '%.2f'|format(spent) }}</span>
+              <span>Unlimited</span>
+            </div>
+          {% endif %}
         </div>
-
-        {% if limit > 0 %}
-          <div class="budget-track" role="progressbar" aria-label="{{ cat['name'] }} budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ bar_width|round|int }}">
-            <div class="budget-fill" style="width: {{ bar_width }}%;"></div>
-          </div>
-
-          <div class="budget-category-amounts">
-            <span>Spent ${{ "%.2f"|format(spent) }}</span>
-
-            {% if remaining < 0 %}
-              <span>Over by ${{ "%.2f"|format(-remaining) }}</span>
-            {% else %}
-              <span>${{ "%.2f"|format(remaining) }} left</span>
-            {% endif %}
-          </div>
-
-        {% else %}
-          <div class="budget-category-amounts">
-            <span>Spent ${{ "%.2f"|format(spent) }}</span>
-            <span>Unlimited</span>
-          </div>
-        {% endif %}
-      </div>
-
-    {% else %}
-      <p class="empty-state">No budget categories yet.</p>
-    {% endfor %}
-  </div>
-</section>
-
-<div class="dashboard-grid">
-
-  <!-- Monthly spending chart -->
-  <section class="card">
-    <h2>Spending in {{ month_label }}</h2>
-
-    {% if chart_labels %}
-      <div class="spending-chart-wrap">
-        <canvas id="spendingChart"></canvas>
-      </div>
-    {% else %}
-      <div class="dashboard-empty">
-        <p>No spending recorded this month.</p>
-        <a class="quick-action" href="{{ url_for('add_transaction') }}">+ Add Transaction</a>
-      </div>
-    {% endif %}
+      {% else %}
+        <p class="sw-dash-empty">No budget categories yet.</p>
+      {% endfor %}
+    </div>
   </section>
 
-  <!-- List of the user's transactions -->
-  <section class="card">
-    <h2>Transaction History</h2>
+  <div class="sw-dash-bottom-grid">
+    <section class="card sw-dash-panel">
+      <div class="sw-dash-section-head">
+        <div>
+          <h2>Spending by Category</h2>
+          <p>{{ month_label }} breakdown</p>
+        </div>
+      </div>
+      {% if chart_labels %}
+        <div class="sw-dash-chart">
+          <canvas id="spendingChart" role="img" aria-label="Spending by category"></canvas>
+        </div>
+      {% else %}
+        <div class="sw-dash-empty">
+          No spending recorded this month.
+          <div><a class="sw-dash-text-link" href="{{ url_for('add_transaction') }}">Add a transaction</a></div>
+        </div>
+      {% endif %}
+    </section>
 
-    {% if transactions %}
-      <div class="transaction-table-wrap">
-        <table class="txn-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Amount</th>
-              <th></th>
-            </tr>
-          </thead>
-
-          <!-- DEMO 05 | FR7 | Display transactions using Jinja -->
-          <tbody>
-            {% for t in transactions %}
+    <section class="card sw-dash-panel">
+      <div class="sw-dash-section-head">
+        <div>
+          <h2>Transaction History</h2>
+          <p>View or update your recorded transactions.</p>
+        </div>
+      </div>
+      {% if transactions %}
+        <div class="sw-dash-table-wrap">
+          <table class="sw-dash-table">
+            <thead>
               <tr>
-                <td>{{ t['date'] }}</td>
-                <td>{{ t['name'] }}</td>
-                <td><span class="badge">{{ t['category'] }}</span></td>
-                <td>${{ "%.2f"|format(t['amount']) }}</td>
-
-                <td class="row-actions">
-                  <a href="{{ url_for('edit_transaction', txn_id=t['id']) }}">Edit</a>
-
-                  <form method="POST" action="{{ url_for('delete_transaction', txn_id=t['id']) }}" style="display:inline">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="link-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
-                  </form>
-                </td>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th class="amount">Amount</th>
+                <th class="actions">Actions</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-    {% else %}
-      <p class="empty-state">No transactions yet.</p>
-    {% endif %}
-  </section>
+            </thead>
+            <!-- DEMO 05 | FR7 | Display transactions using Jinja -->
+            <tbody>
+              {% for t in transactions %}
+                <tr>
+                  <td>{{ t['date'] }}</td>
+                  <td>{{ t['name'] }}</td>
+                  <td><span class="badge">{{ t['category'] }}</span></td>
+                  <td class="amount">${{ '%.2f'|format(t['amount']) }}</td>
+                  <td class="actions">
+                    <a href="{{ url_for('edit_transaction', txn_id=t['id']) }}">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_transaction', txn_id=t['id']) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="link-btn"
+                              onclick="return confirm('Delete this transaction?')">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="sw-dash-empty">No transactions yet. Add one to get started.</p>
+      {% endif %}
+    </section>
+  </div>
 </div>
 
 <!-- DEMO 06 | FR7 | Chart.js displays spending by category -->
 {% if chart_labels %}
 <script>
-  const ctx = document.getElementById('spendingChart');
-
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: {{ chart_labels|tojson }},
-      datasets: [{
-        data: {{ chart_values|tojson }},
-        backgroundColor: [
-          '#5b8cff',
-          '#e5a13d',
-          '#3fbf7f',
-          '#ae87df',
-          '#f2685a',
-          '#54b8cb',
-          '#8b91a3'
-        ],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '68%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim(),
-            boxWidth: 12,
-            padding: 14
+  const chartCanvas = document.getElementById('spendingChart');
+  if (chartCanvas && window.Chart) {
+    new Chart(chartCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: {{ chart_labels|tojson }},
+        datasets: [{
+          data: {{ chart_values|tojson }},
+          backgroundColor: [
+            '#5b8cff', '#45b4aa', '#e5a13d', '#a78bfa',
+            '#f2685a', '#6ca4e6', '#8bc77c', '#d789b6'
+          ],
+          borderWidth: 0,
+          hoverOffset: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 14, usePointStyle: true }
           }
         }
       }
-    }
-  });
+    });
+  }
 </script>
 {% endif %}
 

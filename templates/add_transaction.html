@@ -1,28 +1,103 @@
 {% extends "base.html" %}
 {% block title %}Add Transaction - StockWise{% endblock %}
 {% block content %}
-<!-- ADD TRANSACTION FORM -->
-<div class="card form-card">
-  <h1>Add Transaction</h1>
-  <form method="POST">
+
+<style>
+  .add-page { max-width: 780px; margin: 0 auto; }
+  .add-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .add-header h1 { font-size: 2rem; margin: 0 0 8px; }
+  .add-header p { color: var(--muted); margin: 0; }
+  .add-back { color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+  .add-back:hover { text-decoration: underline; }
+
+  .add-card { padding: 28px; border-radius: 14px; }
+  .add-card h2 { margin: 0 0 22px; font-size: 1.15rem; }
+  .add-field { margin-bottom: 20px; }
+  .add-field label {
+    margin: 0 0 8px;
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .add-field input, .add-field select {
+    min-height: 46px;
+    padding: 11px 13px;
+    border-radius: 9px;
+  }
+  .add-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .add-actions { display: flex; align-items: center; gap: 16px; margin-top: 26px; }
+  .add-actions .btn-primary { width: auto; margin: 0; padding: 12px 22px; }
+  .add-cancel { color: var(--muted); text-decoration: none; }
+  .add-cancel:hover { color: var(--text); }
+  .add-note { margin: 22px 0 0; font-size: 0.86rem; color: var(--muted); }
+
+  @media (max-width: 600px) {
+    .add-header h1 { font-size: 1.6rem; }
+    .add-card { padding: 20px; }
+    .add-row { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<div class="add-page">
+  <header class="add-header">
+    <div>
+      <h1>Add Transaction</h1>
+      <p>Record an expense to keep your budget up to date.</p>
+    </div>
+    <a class="add-back" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+  </header>
+
+  <section class="card add-card">
+    <h2>Transaction Details</h2>
+    <form method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Name</label>
-    <input type="text" name="name" placeholder="e.g. Groceries" required autofocus>
 
-    <label>Amount ($)</label>
-    <input type="number" step="0.01" name="amount" placeholder="0.00" required>
+      <div class="add-field">
+        <label for="txn-name">Name</label>
+        <input id="txn-name" type="text" name="name" placeholder="e.g. Groceries" required autofocus>
+      </div>
 
-    <label>Category</label>
-    <select name="category" required>
-      {% for c in categories %}
-        <option value="{{ c['name'] }}">{{ c['name'] }}</option>
-      {% endfor %}
-    </select>
+      <div class="add-row">
+        <div class="add-field">
+          <label for="txn-amount">Amount ($)</label>
+          <input id="txn-amount" type="number" name="amount" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="add-field">
+          <label for="txn-category">Category</label>
+          <select id="txn-category" name="category" required>
+            {% for c in categories %}
+              <option value="{{ c['name'] }}">{{ c['name'] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
 
-    <label>Date</label>
-    <input type="date" name="date" value="{{ today }}">
+      <div class="add-field">
+        <label for="txn-date">Date</label>
+        <input id="txn-date" type="date" name="date" value="{{ today }}" required>
+      </div>
 
-    <button type="submit" class="btn-primary">Save Transaction</button>
-  </form>
+      <div class="add-actions">
+        <button type="submit" class="btn-primary">Save Transaction</button>
+        <a class="add-cancel" href="{{ url_for('dashboard') }}">Cancel</a>
+      </div>
+    </form>
+
+    <p class="add-note">
+      Need a new category? <a href="{{ url_for('budget_settings') }}">Manage Budget Settings</a>.
+    </p>
+  </section>
 </div>
+
 {% endblock %}

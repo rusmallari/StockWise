@@ -1,29 +1,138 @@
-{%extends "base.html"%}
-{%block title%} Stocks Search - StockWise {%endblock%}
 
-{%block content%}
-<div class = "card">
-    <form method = "GET" action = "{{url_for('stock_search')}}">
-        <input name = "q" value = "{{query}}" /> 
-        <button class = "btn-primary"> Submit </button>
+{% extends "base.html" %}
+{% block title %}Stock Search - StockWise{% endblock %}
+{% block content %}
+
+<style>
+  .stocks-page { display: grid; gap: 24px; }
+  .stocks-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .stocks-header h1 { font-size: 2rem; margin: 0 0 8px; }
+  .stocks-header p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  .stocks-movers {
+    display: inline-block; padding: 11px 17px; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--card-bg-alt);
+    color: var(--text); text-decoration: none; font-size: 0.9rem;
+  }
+  .stocks-movers:hover { border-color: var(--primary); }
+
+  .stocks-search-card, .stocks-results-card { padding: 27px; border-radius: 15px; }
+  .stocks-search-card h2, .stocks-results-card h2 { margin: 0 0 8px; font-size: 1.12rem; }
+  .stocks-description { color: var(--muted); margin: 0 0 19px; font-size: 0.88rem; }
+  .stocks-form { display: flex; gap: 10px; }
+  .stocks-form input {
+    flex: 1; min-width: 0; min-height: 48px;
+    border-radius: 9px; padding: 12px 14px;
+  }
+  .stocks-form .btn-primary {
+    margin: 0; width: auto; border-radius: 9px;
+    padding: 12px 24px; white-space: nowrap;
+  }
+  .stocks-shortcuts {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 9px; margin-top: 17px; font-size: 0.83rem;
+  }
+  .stocks-shortcuts span { color: var(--muted); }
+  .stocks-shortcuts a {
+    color: var(--primary); text-decoration: none;
+    padding: 5px 10px; background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 7px;
+  }
+  .stocks-shortcuts a:hover { border-color: var(--primary); }
+
+  .stocks-results-heading {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 19px;
+  }
+  .stocks-results-heading h2 { margin: 0; }
+  .stocks-count { color: var(--muted); font-size: 0.85rem; }
+  .stocks-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .stocks-result {
+    display: block; text-decoration: none; color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--card-bg-alt); padding: 18px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .stocks-result:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .stocks-result-top {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .stocks-symbol {
+    color: var(--primary); background: rgba(91, 140, 255, 0.12);
+    padding: 6px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+  }
+  .stocks-exchange { color: var(--muted); font-size: 0.78rem; text-align: right; }
+  .stocks-name { display: block; font-size: 0.96rem; font-weight: 650; margin-bottom: 13px; }
+  .stocks-view { color: var(--primary); font-size: 0.83rem; font-weight: 600; }
+  .stocks-empty { padding: 30px 0; color: var(--muted); text-align: center; }
+
+  @media (max-width: 700px) {
+    .stocks-grid { grid-template-columns: 1fr; }
+    .stocks-header h1 { font-size: 1.6rem; }
+  }
+  @media (max-width: 480px) {
+    .stocks-search-card, .stocks-results-card { padding: 20px; }
+    .stocks-form { flex-direction: column; }
+    .stocks-form .btn-primary { width: 100%; }
+  }
+</style>
+
+<div class="stocks-page">
+  <header class="stocks-header">
+    <div>
+      <h1>Stock Search</h1>
+      <p>Find companies and explore market information.</p>
+    </div>
+    <a class="stocks-movers" href="{{ url_for('stock_movers') }}">View Stock Movers</a>
+  </header>
+
+  <section class="card stocks-search-card">
+    <h2>Find a Stock</h2>
+    <p class="stocks-description">Search by company name or ticker symbol.</p>
+
+    <form class="stocks-form" method="GET" action="{{ url_for('stock_search') }}">
+      <input type="search" name="q" value="{{ query }}"
+             placeholder="Apple, NVIDIA, TSLA..." aria-label="Company or ticker" required>
+      <button class="btn-primary" type="submit">Search</button>
     </form>
-    {% if results %}
-            <table class="txn-table">
-                <thead>
-                    <tr><th>Company</th><th>Symbol</th><th>Exchange</th></tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                    <td><a href="{{ url_for('stock_detail', ticker = result['symbol']) }}">{{ result['name'] }}</a></td>
-                    <td>{{ result['symbol'] }}</td>
-                    <td>{{ result['exchange'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table> 
-    {%elif query %}
-        <p class = "empty-state"> No stocks found for "{{query}}."</p>
-    {%endif%}
+
+    <div class="stocks-shortcuts">
+      <span>Popular:</span>
+      <a href="{{ url_for('stock_search', q='AAPL') }}">AAPL</a>
+      <a href="{{ url_for('stock_search', q='NVDA') }}">NVDA</a>
+      <a href="{{ url_for('stock_search', q='MSFT') }}">MSFT</a>
+      <a href="{{ url_for('stock_search', q='TSLA') }}">TSLA</a>
+    </div>
+  </section>
+
+  {% if results %}
+    <section class="card stocks-results-card">
+      <div class="stocks-results-heading">
+        <h2>Search Results</h2>
+        <span class="stocks-count">{{ results|length }} found</span>
+      </div>
+
+      <div class="stocks-grid">
+        {% for result in results %}
+          <a class="stocks-result" href="{{ url_for('stock_detail', ticker=result['symbol']) }}">
+            <div class="stocks-result-top">
+              <span class="stocks-symbol">{{ result['symbol'] }}</span>
+              <span class="stocks-exchange">{{ result['exchange'] or 'Exchange N/A' }}</span>
+            </div>
+            <strong class="stocks-name">{{ result['name'] }}</strong>
+            <span class="stocks-view">View Stock Details →</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% elif query %}
+    <section class="card stocks-results-card">
+      <p class="stocks-empty">No results for "{{ query }}". Try a different name or symbol.</p>
+    </section>
+  {% endif %}
 </div>
-{%endblock%}
+
+{% endblock %}
