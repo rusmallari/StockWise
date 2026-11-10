@@ -90,21 +90,21 @@ def _get_history(ticker: str, period="5y"):
     if history.empty:
         return None
 
-    # make a list of dates in the table in the form of YYYY-MM-DD
+    # build a matching list of dates, closes, and volumes where one entry represents one day
     dates = []
-    for date in history.index:
-        dates.append(date.strftime("%Y-%m-%d"))
-
-    # make a list where each item is the closing value of the stock for each day
     closes = []
-    for close in history["Close"]:
-        number = float(close)
-        closes.append(round(number, 2))
-
     volumes = []
-    for volume in history["Volume"]:
-        i_volume = int(volume)
-        volumes.append(i_volume)
+    for date, close, volume in zip(history.index, history["Close"], history["Volume"]):
+        if math.isnan(close):
+            continue
+        dates.append(date.strftime("%Y-%m-%d"))
+        closes.append(round(float(close), 2))
+        if math.isnan(volume):
+            volumes.append(0)
+        else:
+            volumes.append(int(volume))
+    if not closes:
+        return None
 
     # return a dictionary of the company's ID ("symbol"), the list of dates, and the
     # corresponding list of closes
@@ -127,41 +127,46 @@ def get_roi_and_risk(ticker):
     if not history:
         return None
 
-    # if there are less than 30 prices for a stock, then the numbers won't mean too much,
-    # meaning we can't really tell yet.
-    closes = history["closes"]
-    if len(closes) < 30:
+    try:
+        # if there are less than 30 prices for a stock, then the numbers won't mean too much,
+        # meaning we can't really tell yet.
+        closes = history["closes"]
+        if len(closes) < 30:
+            return None
+
+        # find the roi from the entire year
+        roi = (closes[-1] / closes[0]) - 1
+
+        # find the daily return percent for a stock which is a percent of how the stock
+        # changed each day
+        daily_returns = []
+        for i in range(1, len(closes)):
+            each_day_return_percent = (closes[i] / closes[i - 1]) - 1
+            daily_returns.append(each_day_return_percent)
+
+        # By the rules of finance, take the standard deviation of the daily returns to get
+        # the daily volatility and then multiply by sqrt(252) to get annual volatility
+        volatility = statistics.stdev(daily_returns)
+        annual_volatility = volatility * math.sqrt(252)
+
+        # Classify the risk based on very loose criteria (not official)
+        if annual_volatility < 0.20:
+            risk_label = "Low"
+        elif annual_volatility < 0.40:
+            risk_label = "Medium"
+        else:
+            risk_label = "High"
+
+        # return a dictionary of the company's symbol, roi, volatility, and risk label
+        return {
+            "symbol": history["symbol"],
+            "roi": round(roi, 4),
+            "volatility": round(annual_volatility, 4),
+            "risk": risk_label
+        }
+    except Exception as e:
+        print(f"Error in calculating the ROI/risk for {ticker}: {e}")
         return None
-
-    roi = (closes[-1] / closes[0]) - 1      # find the roi from the entire year
-
-    # find the daily return percent for a stock which is a percent of how the stock
-    # changed each day
-    daily_returns = []
-    for i in range(1, len(closes)):
-        each_day_return_percent = (closes[i] / closes[i - 1]) - 1
-        daily_returns.append(each_day_return_percent)
-
-    # By the rules of finance, take the standard deviation of the daily returns to get
-    # the daily volatility and then multiply by sqrt(252) to get annual volatility
-    volatility = statistics.stdev(daily_returns)
-    annual_volatility = volatility * math.sqrt(252)
-
-    # Classify the risk based on very loose criteria (not official)
-    if annual_volatility < 0.20:
-        risk_label = "Low"
-    elif annual_volatility < 0.40:
-        risk_label = "Medium"
-    else:
-        risk_label = "High"
-
-    # return a dictionary of the company's symbol, roi, volatility, and risk label
-    return {
-        "symbol": history["symbol"],
-        "roi": round(roi, 4),
-        "volatility": round(annual_volatility, 4),
-        "risk": risk_label
-    }
 
 # this function is to figure out the most gainers, losers, and mostactives list
 # the kind parameter is going to be picked by the user like "gainers" or "losers"
