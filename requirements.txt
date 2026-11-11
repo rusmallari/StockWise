@@ -3,3 +3,4 @@ yfinance
 openai
 python-dotenv
 scikit-learn
+requests

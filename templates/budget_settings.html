@@ -4,306 +4,527 @@
 {% block content %}
 
 <style>
-  /* Main budget page */
-  .budget-page {
-    width: min(1320px, calc(100vw - 64px));
-    margin: 8px 0 40px 50%;
-    transform: translateX(-50%);
-  }
-
-  .budget-header {
-    margin-bottom: 24px;
-  }
-
-  .budget-header h1 {
-    margin-bottom: 8px;
-  }
-
-  .budget-header p {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin: 0;
-    line-height: 1.5;
-  }
-
-/* DEMO 01 | FR4/FR5 | Budget layout and category limits */
-  /* Displays budget limits and new category form side by side */
-  .budget-layout {
+  /* Budget Settings page */
+  .sw-budget-page {
     display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+    gap: 24px;
+  }
+
+  .sw-budget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .sw-budget-eyebrow {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+
+  .sw-budget-header h1 {
+    font-size: 2rem;
+    margin: 0 0 8px;
+  }
+
+  .sw-budget-subtitle {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+
+  .sw-budget-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 18px;
+    min-height: 42px;
+    background: var(--card-bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .sw-budget-back:hover {
+    border-color: var(--primary);
+  }
+
+  /* Summary cards */
+  .sw-budget-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .sw-budget-stat {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .sw-budget-stat-label {
+    display: block;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+
+  .sw-budget-stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 750;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+
+  .sw-budget-stat-note {
+    display: block;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 8px;
+  }
+
+  /* Main two-column layout */
+  /* DEMO 01 | FR4/FR5 | Budget layout and category limits */
+  .sw-budget-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
     gap: 20px;
     align-items: start;
   }
 
-  .budget-panel {
+  .sw-budget-panel {
     min-width: 0;
-    padding: 24px;
+    padding: 26px;
+    border-radius: 16px;
   }
 
-  .budget-panel h2 {
+  .sw-budget-panel-head {
+    margin-bottom: 24px;
+  }
+
+  .sw-budget-panel-head h2 {
     margin: 0 0 8px;
-    font-size: 1.08rem;
-    font-weight: 600;
+    font-size: 1.1rem;
   }
 
-  .budget-description {
-    margin: 0 0 22px;
+  .sw-budget-panel-head p {
+    margin: 0;
     color: var(--muted);
-    font-size: 0.87rem;
-    line-height: 1.5;
+    font-size: 0.85rem;
+    line-height: 1.6;
   }
 
-  /* Displays all the user's budget categories */
-  .budget-table-container {
-    width: 100%;
-    overflow-x: auto;
+  /* Category list */
+  .sw-budget-list {
+    display: grid;
+    gap: 12px;
   }
 
-  .budget-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    font-size: 0.9rem;
+  .sw-budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px auto;
+    gap: 15px;
+    align-items: center;
+    padding: 16px;
+    background: var(--card-bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 0.2s;
   }
 
-  .budget-table th {
-    padding: 12px 8px;
-    text-align: left;
-    color: var(--muted);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
+  .sw-budget-row:hover {
+    border-color: var(--primary);
   }
 
-  .budget-table td {
-    padding: 12px 8px;
-    border-bottom: 1px solid var(--border);
+  .sw-budget-category {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
   }
 
-  .budget-table tbody tr:last-child td {
-    border-bottom: none;
+  .sw-budget-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: rgba(91, 140, 255, 0.12);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.95rem;
   }
 
-  .budget-table th:first-child,
-  .budget-table td:first-child {
-    padding-left: 0;
+  .sw-budget-category-info {
+    min-width: 0;
   }
 
-  .budget-category {
-    font-weight: 500;
+  .sw-budget-category-name {
+    display: block;
     color: var(--text);
+    font-size: 0.91rem;
+    font-weight: 650;
     overflow-wrap: anywhere;
   }
 
-  /* Keeps budget amounts and delete buttons aligned */
-  .budget-table th:nth-child(2),
-  .budget-table td:nth-child(2) {
-    width: 175px;
-    text-align: right;
-  }
-
-  .budget-table th:last-child,
-  .budget-table td:last-child {
-    width: 75px;
-    text-align: right;
-    padding-right: 0;
-  }
-
-  .budget-limit-input {
+  .sw-budget-category-note {
     display: block;
-    width: 150px;
-    max-width: 100%;
-    margin-left: auto;
-  }
-
-  .budget-delete {
-    font-size: 0.83rem;
-  }
-
-  /* New category form */
-  .budget-new-category label {
-    margin-top: 18px;
-  }
-
-  .budget-new-category input {
-    width: 100%;
-  }
-
-  .budget-save {
-    margin-top: 26px;
-  }
-
-  .budget-save .btn-primary {
-    margin: 0;
-  }
-
-  .budget-note {
-    margin-top: 16px;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+    margin-top: 4px;
+  }
+
+  .sw-budget-amount {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+
+  .sw-budget-amount:focus-within {
+    border-color: var(--primary);
+  }
+
+  .sw-budget-amount span {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .sw-budget-amount input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 0;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sw-budget-amount input:focus {
+    outline: none;
+    border: none;
+  }
+
+  .sw-budget-delete {
+    padding: 10px 12px;
+    border: 1px solid rgba(242, 104, 90, 0.25);
+    border-radius: 9px;
+    background: rgba(242, 104, 90, 0.08);
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .sw-budget-delete:hover {
+    background: rgba(242, 104, 90, 0.16);
+  }
+
+  /* Add category form */
+  .sw-budget-field {
+    margin-bottom: 20px;
+  }
+
+  .sw-budget-field label {
+    display: block;
+    margin: 0 0 9px;
+    color: var(--muted);
+    font-size: 0.81rem;
+    font-weight: 600;
+  }
+
+  .sw-budget-field input {
+    width: 100%;
+    padding: 13px 14px;
+    min-height: 45px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .sw-budget-field input:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .sw-budget-hint {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.78rem;
     line-height: 1.5;
   }
 
-  /* Makes the page fit smaller screens */
-  @media (max-width: 900px) {
-    .budget-page {
-      width: calc(100vw - 48px);
-    }
+  .sw-budget-save {
+    display: block;
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.91rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
 
-    .budget-layout {
+  .sw-budget-save:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+
+  .sw-budget-footer-note {
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+
+  .sw-budget-empty {
+    padding: 35px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* Responsive layout */
+  @media (max-width: 950px) {
+    .sw-budget-layout {
       grid-template-columns: 1fr;
     }
   }
 
   @media (max-width: 600px) {
-    .budget-page {
-      width: calc(100vw - 32px);
+    .sw-budget-stats {
+      grid-template-columns: 1fr;
     }
 
-    .budget-panel {
+    .sw-budget-header h1 {
+      font-size: 1.6rem;
+    }
+
+    .sw-budget-panel,
+    .sw-budget-stat {
       padding: 18px;
     }
 
-    .budget-table {
-      min-width: 400px;
+    .sw-budget-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
     }
 
-    .budget-table th,
-    .budget-table td {
-      padding: 10px 6px;
+    .sw-budget-category {
+      grid-column: 1 / -1;
     }
 
-    .budget-limit-input {
-      width: 135px;
+    .sw-budget-amount {
+      width: 100%;
+    }
+
+    .sw-budget-delete {
+      justify-self: end;
     }
   }
 </style>
 
-<div class="budget-page">
+{% set budget_stats = namespace(total=0, configured=0) %}
 
-  <!-- Budget page header -->
-  <div class="budget-header">
-    <h1>Budget Settings</h1>
-    <p>
-      Manage monthly spending limits and organize your budget categories.
-    </p>
-  </div>
+{% for c in categories %}
+  {% set limit = c['monthly_limit']|float %}
+  {% set budget_stats.total = budget_stats.total + limit %}
 
-  <!-- Saves the user's budget changes -->
-  <form method="POST" class="budget-layout">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if limit > 0 %}
+    {% set budget_stats.configured = budget_stats.configured + 1 %}
+  {% endif %}
+{% endfor %}
 
-    <!-- Shows existing budget categories and their limits -->
-    <section class="card budget-panel">
+<div class="sw-budget-page">
 
-      <h2>Monthly Category Limits</h2>
-
-      <p class="budget-description">
-        Set a spending limit for each category.
-        Enter 0 to leave a category without a limit.
+  <header class="sw-budget-header">
+    <div>
+      <p class="sw-budget-eyebrow">Manage your finances</p>
+      <h1>Budget Settings</h1>
+      <p class="sw-budget-subtitle">
+        Organize your categories and set monthly spending limits.
       </p>
+    </div>
 
-      <div class="budget-table-container">
-        <table class="budget-table">
+    <a href="{{ url_for('dashboard') }}" class="sw-budget-back">
+      Back to Dashboard
+    </a>
+  </header>
 
-          <colgroup>
-            <col>
-            <col style="width: 175px;">
-            <col style="width: 75px;">
-          </colgroup>
+  <section class="sw-budget-stats">
 
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Monthly Limit ($)</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+    <article class="card sw-budget-stat">
+      <span class="sw-budget-stat-label">Total Monthly Budget</span>
 
-          <tbody>
-            {% for c in categories %}
-            <tr>
+      <strong class="sw-budget-stat-value">
+        ${{ '%.2f'|format(budget_stats.total) }}
+      </strong>
 
-              <!-- Category name -->
-              <td class="budget-category">
-                {{ c['name'] }}
-              </td>
+      <span class="sw-budget-stat-note">
+        Combined spending limits across all categories
+      </span>
+    </article>
 
-              <!-- Monthly budget amount -->
-              <td>
-                <input
-                  class="budget-limit-input"
-                  type="number"
-                  name="limit_{{ c['id'] }}"
-                  value="{{ c['monthly_limit'] }}"
-                  min="0"
-                  step="0.01"
-                  aria-label="Monthly limit for {{ c['name'] }}"
-                >
-              </td>
+    <article class="card sw-budget-stat">
+      <span class="sw-budget-stat-label">Budget Categories</span>
 
-              <!-- Deletes the selected category -->
-              <td>
-                <button
-                  type="submit"
-                  class="link-btn budget-delete"
-                  formaction="{{ url_for('delete_category', cat_id=c['id']) }}"
-                  formnovalidate
-                  onclick="return confirm('Delete this category?')"
-                >
-                  Delete
-                </button>
-              </td>
+      <strong class="sw-budget-stat-value">
+        {{ categories|length }}
+      </strong>
 
-            </tr>
-            {% endfor %}
-          </tbody>
+      <span class="sw-budget-stat-note">
+        {{ budget_stats.configured }} categories with spending limits
+      </span>
+    </article>
 
-        </table>
+  </section>
+
+  <form method="POST" class="sw-budget-layout">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <section class="card sw-budget-panel">
+
+      <div class="sw-budget-panel-head">
+        <h2>Monthly Category Limits</h2>
+
+        <p>
+          Update the maximum amount you'd like to spend in each category.
+          Set a limit to 0 for unlimited spending.
+        </p>
+      </div>
+
+      <div class="sw-budget-list">
+
+        {% for c in categories %}
+
+          <div class="sw-budget-row">
+
+            <div class="sw-budget-category">
+              <div class="sw-budget-icon">
+                {{ c['name'][:1]|upper }}
+              </div>
+
+              <div class="sw-budget-category-info">
+                <span class="sw-budget-category-name">
+                  {{ c['name'] }}
+                </span>
+
+                <span class="sw-budget-category-note">
+                  Monthly spending limit
+                </span>
+              </div>
+            </div>
+
+            <div class="sw-budget-amount">
+              <span>$</span>
+
+              <input
+                type="number"
+                name="limit_{{ c['id'] }}"
+                value="{{ c['monthly_limit'] }}"
+                min="0"
+                step="0.01"
+                aria-label="Monthly limit for {{ c['name'] }}"
+              >
+            </div>
+
+            <button
+              type="submit"
+              class="sw-budget-delete"
+              formaction="{{ url_for('delete_category', cat_id=c['id']) }}"
+              formmethod="POST"
+              formnovalidate
+              onclick="return confirm('Delete this category?')"
+            >
+              Delete
+            </button>
+
+          </div>
+
+        {% else %}
+
+          <p class="sw-budget-empty">
+            No categories found. Add your first category to get started.
+          </p>
+
+        {% endfor %}
+
       </div>
 
     </section>
 
-    <!-- Allows users to add their own categories -->
-    <section class="card budget-panel budget-new-category">
+    <section class="card sw-budget-panel">
 
-      <h2>Add a Category</h2>
+      <div class="sw-budget-panel-head">
+        <h2>Add a Category</h2>
 
-      <p class="budget-description">
-        Create a custom category to track additional expenses.
-      </p>
-
-      <!-- Enter category name -->
-      <label for="new_category">Category Name</label>
-      <input
-        type="text"
-        id="new_category"
-        name="new_category"
-        placeholder="e.g. Subscriptions"
-      >
-
-      <!-- Enter the monthly budget limit -->
-      <label for="new_category_limit">Monthly Limit ($)</label>
-      <input
-        type="number"
-        id="new_category_limit"
-        name="new_category_limit"
-        min="0"
-        step="0.01"
-        placeholder="0.00"
-      >
-
-      <!-- Saves the updated limits or new category -->
-      <div class="budget-save">
-        <button type="submit" class="btn-primary">
-          Save Settings
-        </button>
+        <p>
+          Create a custom category to organize your spending.
+        </p>
       </div>
 
-      <p class="budget-note">
-        Saving updates your existing limits and adds a new
-        category if you've entered one.
+      <div class="sw-budget-field">
+        <label for="new_category">Category Name</label>
+
+        <input
+          type="text"
+          id="new_category"
+          name="new_category"
+          placeholder="e.g. Subscriptions"
+          maxlength="80"
+        >
+
+        <small class="sw-budget-hint">
+          Give your new spending category a name.
+        </small>
+      </div>
+
+      <div class="sw-budget-field">
+        <label for="new_category_limit">Monthly Limit ($)</label>
+
+        <input
+          type="number"
+          id="new_category_limit"
+          name="new_category_limit"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+        >
+
+        <small class="sw-budget-hint">
+          Enter 0 if you don't want to set a spending limit.
+        </small>
+      </div>
+
+      <button type="submit" class="sw-budget-save">
+        Save Budget Changes
+      </button>
+
+      <p class="sw-budget-footer-note">
+        Saving will update your existing category limits and add
+        a new category if you've entered one.
       </p>
 
     </section>

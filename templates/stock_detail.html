@@ -1,94 +1,164 @@
-{%extends "base.html"%}
-{%block title%} {{profile['name']}} - StockWise {%endblock%}
 
-{%block content%}
-<div class = "card">
-    <h1> {{profile['name']}} <span class = "subtitle"> {{profile['symbol']}} </span></h1>
-    <p class = "subtitle"> Sector: {{profile['sector'] or "Not Available"}} </p>
-    <p class = "subtitle"> Industry: {{profile['industry'] or "Not Available"}} </p>
+{% extends "base.html" %}
+{% block title %}{{ profile['name'] }} - StockWise{% endblock %}
+{% block content %}
+
+<style>
+  .stock-page { display: grid; gap: 20px; }
+  .stock-header {
+    display: flex; justify-content: space-between; align-items: end;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .stock-back { display: inline-block; margin-bottom: 16px; text-decoration: none; font-size: 0.85rem; }
+  .stock-header h1 { margin: 0 0 10px; font-size: 2rem; }
+  .stock-header p { margin: 0; color: var(--muted); }
+  .stock-symbol {
+    display: inline-block; margin-left: 8px; padding: 6px 10px;
+    background: var(--card-bg-alt); border-radius: 8px;
+    color: var(--primary); font-size: 0.9rem; vertical-align: middle;
+  }
+  .stock-website {
+    padding: 11px 16px; border: 1px solid var(--border);
+    border-radius: 9px; background: var(--card-bg-alt);
+    text-decoration: none; color: var(--text); font-size: 0.88rem;
+  }
+  .stock-website:hover { border-color: var(--primary); }
+  .stock-panel { padding: 24px; border-radius: 15px; }
+  .stock-panel h2 { margin: 0 0 8px; font-size: 1.15rem; }
+  .stock-description { color: var(--muted); line-height: 1.7; margin: 12px 0 0; }
+  .stock-muted { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; }
+  .stock-chart { position: relative; height: 320px; margin-top: 18px; }
+  .stock-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stock-metric {
+    border: 1px solid var(--border); background: var(--card-bg-alt);
+    border-radius: 11px; padding: 18px;
+  }
+  .stock-metric span { display: block; color: var(--muted); font-size: 0.83rem; }
+  .stock-metric strong { display: block; margin-top: 11px; font-size: 1.6rem; }
+  .stock-forecast {
+    padding: 18px; background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 11px;
+  }
+  .stock-forecast strong { display: block; margin: 8px 0; font-size: 1.35rem; }
+  .stock-forecast p { margin: 8px 0 0; line-height: 1.6; }
+  .stock-disclaimer { color: var(--muted); font-size: 0.8rem; margin: 16px 0 0; }
+  @media (max-width: 650px) {
+    .stock-header h1 { font-size: 1.55rem; }
+    .stock-metrics { grid-template-columns: 1fr; }
+    .stock-chart { height: 260px; }
+    .stock-panel { padding: 18px; }
+  }
+</style>
+
+<div class="stock-page">
+  <header class="stock-header">
+    <div>
+      <a class="stock-back" href="{{ url_for('stock_search') }}">← Back to Stock Search</a>
+      <h1>{{ profile['name'] }} <span class="stock-symbol">{{ profile['symbol'] }}</span></h1>
+      <p>{{ profile['sector'] or 'Sector unavailable' }} · {{ profile['industry'] or 'Industry unavailable' }}</p>
+    </div>
     {% if profile['website'] %}
-        <p> Link to Website: 
-            <a href = "{{profile['website']}}" target = "_blank" rel = "noopener"> {{profile['name']}} </a>
-        </p>
-    {%endif%}  
-    <a href = "{{url_for('stock_search')}}"> Back to Search</a> 
+      <a class="stock-website" href="{{ profile['website'] }}" target="_blank" rel="noopener noreferrer">Company Website ↗</a>
+    {% endif %}
+  </header>
 
+  <section class="card stock-panel">
+    <h2>About the Company</h2>
+    <p class="stock-description">{{ profile['description'] or 'No company description available.' }}</p>
+  </section>
 
-    {% if profile['description'] %}
-        <p> {{profile['description']}}</p>
-    {%else%}
-        <p> No Company Description Available </p>
-    {%endif%}
-
-
-    <h2 class = "section-heading"> 1 Year Price</h2>
+  <section class="card stock-panel">
+    <h2>1-Year Price History</h2>
+    <p class="stock-muted">Historical closing prices in USD</p>
     {% if history %}
-        <canvas id = "priceChart" height = "120"
-                data-dates = '{{history["dates"]|tojson}}'
-                data-closes = '{{history["closes"]|tojson}}'> 
-        </canvas>
-    {%else%}
-        <p class = "empty-state"> Price history not available for this stock. </p>
-    {%endif%}
+      <div class="stock-chart">
+        <canvas id="priceChart" aria-label="Historical closing prices" role="img"></canvas>
+      </div>
+    {% else %}
+      <p class="stock-description">Price history isn't available right now.</p>
+    {% endif %}
+  </section>
 
-
-
+  <section class="card stock-panel">
+    <h2>Return & Risk</h2>
+    <p class="stock-muted">Based on the past year of market data</p>
     {% if risk %}
-        <p> 1-Year Return: {{ "%.1f" | format(risk['roi'] * 100)}}% </p>
-        <p> Volatility: {{ "%.1f" | format(risk['volatility'] * 100)}}% </p>
-        <p> Risk: {{ risk['risk']}} </p>
-        <p> Based on the past year of prices</p>
-    {%else%}
-        <p class = "empty-state"> Not enough price history to confidently estimate return and risk </p>
-    {%endif%}
+      <div class="stock-metrics">
+        <div class="stock-metric">
+          <span>1-Year Return</span>
+          <strong>{{ '%+.1f'|format(risk['roi'] * 100) }}%</strong>
+        </div>
+        <div class="stock-metric">
+          <span>Volatility</span>
+          <strong>{{ '%.1f'|format(risk['volatility'] * 100) }}%</strong>
+        </div>
+        <div class="stock-metric">
+          <span>Risk Level</span>
+          <strong>{{ risk['risk'] }}</strong>
+        </div>
+      </div>
+    {% else %}
+      <p class="stock-description">Not enough price history to calculate return and risk.</p>
+    {% endif %}
+  </section>
 
-
-    <h2 class = "section-heading"> Next Week's Price Swings (Powered by Machine Learning) </h2>
-    {%if prediction is none%}
-        <p> Not enough price history to make a forecast</p>
-
-    {%elif prediction.reliability%}
-        {%if prediction.probability > 0.5%}
-            <p> {{prediction.label}} -- {{ "%.0f" | format(prediction.probability * 100)}}% likely </p>
-            <p> Our model expects {{profile['symbol']}}'s price to move around more than it has over the past 3 months</p>
-        {%else%}
-            <p> {{prediction.label}} -- {{ "%.0f" | format((1 - prediction.probability) * 100)}}% likely </p>
-            <p> Our model expects {{profile['symbol']}}'s price to move around less than it has over the past 3 months</p>
-        {%endif%}
-        <p> Our model was right {{ "%.1f" | format(prediction.accuracy * 100)}}% of the time, vs. 
-            {{ "%.1f" | format(prediction.baseline * 100)}}% just guessing. </p>
-        
-    {%else%}
-        <p> Not available for {{profile['symbol']}}</p>
-        <p> Our model was not reliably better than a simple guess for this stock ({{ "%.1f" | format(prediction.accuracy * 100)}}% vs. 
-            {{ "%.1f" | format(prediction.baseline * 100)}}%), so we will not show a forecast</p>
-    {%endif%}
-    <p> Forecasts how much the stock's price may move based on past price patterns </p>
-
-
+  <section class="card stock-panel">
+    <h2>Next Week's Price Swings</h2>
+    <p class="stock-muted">Machine learning estimate based on past price patterns</p>
+    {% if prediction is none %}
+      <p>Not enough price data for a forecast.</p>
+    {% elif prediction['reliability'] %}
+      <div class="stock-forecast">
+        <span class="stock-muted">Predicted volatility</span>
+        <strong>{{ prediction['label'] }}</strong>
+        <p>{{ '%.0f'|format((prediction['probability'] if prediction['probability'] > 0.5 else 1 - prediction['probability']) * 100) }}% model probability</p>
+        {% if prediction['probability'] > 0.5 %}
+          <p>Our model expects {{ profile['symbol'] }} to have larger price swings than usual over the next week.</p>
+        {% else %}
+          <p>Our model expects {{ profile['symbol'] }} to have smaller price swings than usual over the next week.</p>
+        {% endif %}
+      </div>
+      <p class="stock-disclaimer">
+        Model test accuracy: {{ '%.1f'|format(prediction['accuracy'] * 100) }}%.
+        Baseline accuracy: {{ '%.1f'|format(prediction['baseline'] * 100) }}%.
+      </p>
+    {% else %}
+      <p>The model wasn't reliably better than the baseline for this stock, so no forecast is shown.</p>
+      <p class="stock-disclaimer">
+        Model: {{ '%.1f'|format(prediction['accuracy'] * 100) }}% accuracy.
+        Baseline: {{ '%.1f'|format(prediction['baseline'] * 100) }}%.
+      </p>
+    {% endif %}
+    <p class="stock-disclaimer">These estimates are not guarantees of future market performance.</p>
+  </section>
 </div>
 
 {% if history %}
- <script>
-    const ctx = document.getElementById("priceChart"); 
-    new Chart(ctx, {
-        type: 'line', 
-        data: {
-            labels: JSON.parse(ctx.dataset.dates), 
-            datasets: [{
-                label: 'Closing price ($)', 
-                data: JSON.parse(ctx.dataset.closes), 
-                borderColor: '#5b8cff', 
-                pointRadius: 0, 
-                tension: 0.1
-            }]
-        }, 
-        options: {responsive: true, plugins: {legend: {display: false} } }
-
-    }); 
-
- </script>
- {%endif%}
-
-
-{%endblock%}
+<script>
+  const priceChart = document.getElementById('priceChart');
+  if (priceChart && window.Chart) {
+    new Chart(priceChart, {
+      type: 'line',
+      data: {
+        labels: {{ history['dates']|tojson }},
+        datasets: [{
+          data: {{ history['closes']|tojson }},
+          borderColor: '#5b8cff',
+          backgroundColor: 'rgba(91, 140, 255, 0.08)',
+          fill: true,
+          pointRadius: 0,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: { legend: { display: false } },
+        scales: { y: { ticks: { callback: value => '$' + value } } }
+      }
+    });
+  }
+</script>
+{% endif %}
+{% endblock %}

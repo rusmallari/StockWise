@@ -1,0 +1,261 @@
+
+{% extends "base.html" %}
+{% block title %}Monthly Reports - StockWise{% endblock %}
+{% block content %}
+<section class="reports-page">
+  <div class="reports-heading">
+    <div>
+      <p class="reports-eyebrow">SPENDING ANALYTICS</p>
+      <h1>Monthly Reports</h1>
+      <p class="subtitle">Review your spending, compare budgets, and export transactions.</p>
+    </div>
+    <div class="reports-controls">
+      <form action="{{ url_for('reports') }}" method="get" class="reports-filter">
+        <label for="report-month">Choose month</label>
+        <div class="reports-filter-row">
+          <input id="report-month" type="month" name="month" value="{{ month }}" required>
+          <button class="reports-button" type="submit">View report</button>
+        </div>
+      </form>
+      <a class="reports-button reports-outline" href="{{ url_for('export_report', month=month) }}">Export CSV</a>
+    </div>
+  </div>
+
+  <h2 class="reports-subheading">{{ month_label }} overview</h2>
+
+  <div class="reports-stats">
+    <article class="card reports-stat">
+      <span>Total spent</span>
+      <strong>${{ '%.2f'|format(total_spent) }}</strong>
+      <small>Across all categories</small>
+    </article>
+
+    <article class="card reports-stat">
+      <span>Monthly budget</span>
+      {% if total_budget > 0 %}
+        <strong>${{ '%.2f'|format(total_budget) }}</strong>
+      {% else %}
+        <strong>Not set</strong>
+      {% endif %}
+      <small>Current category limits</small>
+    </article>
+
+    <article class="card reports-stat">
+      <span>Budget remaining</span>
+      {% if total_budget > 0 %}
+        <strong class="{% if remaining < 0 %}reports-negative{% endif %}">
+          ${{ '%.2f'|format(remaining) }}
+        </strong>
+        <small>
+          {% if remaining < 0 %}Over budget{% else %}Across all categories{% endif %}
+        </small>
+      {% else %}
+        <strong>Not set</strong>
+        <small>Add monthly budget limits</small>
+      {% endif %}
+    </article>
+
+    <article class="card reports-stat">
+      <span>Transactions</span>
+      <strong>{{ transaction_count }}</strong>
+      <small>Recorded this month</small>
+    </article>
+  </div>
+
+  <div class="reports-charts">
+    <section class="card reports-chart-card">
+      <div class="reports-card-heading">
+        <h2>Spending by category</h2>
+        <p>Where your money went</p>
+      </div>
+
+      {% if chart_labels %}
+        <div class="reports-chart-wrap">
+          <canvas id="categoryReportChart" aria-label="Spending by category" role="img"></canvas>
+        </div>
+      {% else %}
+        <p class="reports-empty">No spending recorded for this month.</p>
+      {% endif %}
+    </section>
+
+    <section class="card reports-chart-card">
+      <div class="reports-card-heading">
+        <h2>Six-month trend</h2>
+        <p>Monthly spending up to {{ month_label }}</p>
+      </div>
+      <div class="reports-chart-wrap">
+        <canvas id="trendReportChart" aria-label="Spending for six months" role="img"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <section class="card reports-breakdown">
+    <div class="reports-card-heading">
+      <h2>Category breakdown</h2>
+      <p>Compared with your current monthly budget limits</p>
+    </div>
+
+    {% if breakdown %}
+      <div class="reports-category-grid">
+        {% for cat in breakdown %}
+          <div class="reports-category">
+            <div class="reports-category-row">
+              <strong>{{ cat.name }}</strong>
+              <span>
+                ${{ '%.2f'|format(cat.spent) }}
+                {% if cat.limit > 0 %}
+                  / ${{ '%.2f'|format(cat.limit) }}
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="reports-track">
+              <div
+                class="reports-fill{% if cat.limit > 0 and cat.spent > cat.limit %} reports-over{% elif cat.limit > 0 and cat.percent >= 80 %} reports-near{% endif %}"
+                style="width: {{ cat.bar_percent }}%">
+              </div>
+            </div>
+
+            <small>
+              {% if cat.limit == 0 %}
+                No budget limit set
+              {% else %}
+                {{ cat.percent }}% of budget used
+              {% endif %}
+            </small>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="reports-empty">
+        No categories yet. Add your first budget category to get started.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="card reports-transactions">
+    <div class="reports-card-heading">
+      <h2>Transactions in {{ month_label }}</h2>
+    </div>
+
+    {% if transactions %}
+      <div class="reports-table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th class="reports-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for txn in transactions %}
+              <tr>
+                <td>{{ txn['date'] }}</td>
+                <td>{{ txn['name'] }}</td>
+                <td><span class="badge">{{ txn['category'] }}</span></td>
+                <td class="reports-right">
+                  ${{ '%.2f'|format(txn['amount']) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="reports-empty">
+        No transactions this month. Try another month or add a transaction.
+      </p>
+    {% endif %}
+  </section>
+</section>
+
+<script>
+  if (window.Chart) {
+    const categoryLabels = {{ chart_labels|tojson }};
+    const categoryValues = {{ chart_values|tojson }};
+    const trendLabels = {{ trend_labels|tojson }};
+    const trendValues = {{ trend_values|tojson }};
+
+    const formatCurrency = value =>
+      '$' + Number(value).toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      });
+
+    const categoryChart = document.getElementById('categoryReportChart');
+
+    if (categoryChart && categoryValues.length) {
+      new Chart(categoryChart, {
+        type: 'doughnut',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            data: categoryValues,
+            backgroundColor: [
+              '#5b8cff', '#45b4aa', '#e5a13d', '#a78bfa',
+              '#f2685a', '#6ca4e6', '#8bc77c', '#d789b6'
+            ],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 16, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                label: item =>
+                  item.label + ': ' + formatCurrency(item.raw)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    const trendChart = document.getElementById('trendReportChart');
+
+    if (trendChart) {
+      new Chart(trendChart, {
+        type: 'bar',
+        data: {
+          labels: trendLabels,
+          datasets: [{
+            label: 'Spending',
+            data: trendValues,
+            backgroundColor: '#5b8cff',
+            borderRadius: 6,
+            maxBarThickness: 38
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: item => formatCurrency(item.raw)
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: formatCurrency }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+</script>
+{% endblock %}

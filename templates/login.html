@@ -1,20 +1,82 @@
+
 {% extends "base.html" %}
-{% block title %}Login - StockWise{% endblock %}
+{% block title %}Log In - StockWise{% endblock %}
 {% block content %}
-<!-- LOGIN FORM -->
-<div class="card auth-card">
-  <h1>Welcome back</h1>
-  <p class="subtitle">Log in to your budget dashboard</p>
-  <form method="POST">
+
+<style>
+  .login-page {
+    min-height: 65vh; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .login-card {
+    width: 100%; max-width: 460px;
+    padding: 36px; border-radius: 16px;
+  }
+  .login-brand {
+    display: inline-block; padding: 7px 12px; margin-bottom: 24px;
+    color: var(--primary); background: var(--card-bg-alt);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.82rem; font-weight: 700;
+  }
+  .login-card h1 { font-size: 1.9rem; margin: 0 0 9px; }
+  .login-subtitle {
+    color: var(--muted); font-size: 0.9rem; margin: 0 0 30px;
+  }
+  .login-field { margin-bottom: 20px; }
+  .login-field label {
+    margin: 0 0 9px; font-size: 0.82rem;
+    color: var(--muted); text-transform: none; letter-spacing: 0;
+  }
+  .login-field input {
+    min-height: 47px; padding: 12px 14px; border-radius: 9px;
+  }
+  .login-card .btn-primary {
+    min-height: 47px; border-radius: 9px; margin-top: 25px;
+  }
+  .login-footer {
+    text-align: center; color: var(--muted);
+    font-size: 0.88rem; margin: 24px 0 0;
+  }
+  .login-footer a { font-weight: 600; text-decoration: none; }
+  .login-footer a:hover { text-decoration: underline; }
+  @media (max-width: 480px) {
+    .login-card { padding: 24px; }
+    .login-card h1 { font-size: 1.6rem; }
+  }
+</style>
+
+<div class="login-page">
+  <section class="card login-card">
+    <span class="login-brand">StockWise</span>
+
+    <h1>Welcome Back</h1>
+    <p class="login-subtitle">Log in to manage your finances.</p>
+
+    <form method="POST" action="{{ url_for('login') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Username</label>
-    <input type="text" name="username" required autofocus>
 
-    <label>Password</label>
-    <input type="password" name="password" required>
+      <div class="login-field">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" name="username"
+               placeholder="Enter your username"
+               autocomplete="username" required autofocus>
+      </div>
 
-    <button type="submit" class="btn-primary">Log In</button>
-  </form>
-  <p class="switch-auth">No account yet? <a href="{{ url_for('signup') }}">Sign up</a></p>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password"
+               placeholder="Enter your password"
+               autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" class="btn-primary">Log In</button>
+    </form>
+
+    <p class="login-footer">
+      Don't have an account?
+      <a href="{{ url_for('signup') }}">Sign Up</a>
+    </p>
+  </section>
 </div>
+
 {% endblock %}
